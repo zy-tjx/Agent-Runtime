@@ -1,0 +1,12 @@
+langgraph
+fastapi
+uvicorn
+pydantic
+redis
+faiss-cpu
+streamlit
+python-dotenv
+langchain-openai
+langchain
+pytest
+tenacity

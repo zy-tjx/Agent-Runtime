@@ -1,0 +1,86 @@
+[
+  {
+    "id": "learn-001",
+    "question": "学习 LangGraph 状态机原理",
+    "mode_expectation": "learn",
+    "difficulty": "complex",
+    "should_retrieve": true
+  },
+  {
+    "id": "learn-002",
+    "question": "帮我规划 Agent 系统的学习路线",
+    "mode_expectation": "learn",
+    "difficulty": "complex",
+    "should_retrieve": true
+  },
+  {
+    "id": "learn-003",
+    "question": "学习 Prompt 工程",
+    "mode_expectation": "learn",
+    "difficulty": "simple",
+    "should_retrieve": true
+  },
+  {
+    "id": "learn-004",
+    "question": "我想了解 RAG 检索增强生成",
+    "mode_expectation": "learn",
+    "difficulty": "simple",
+    "should_retrieve": true
+  },
+  {
+    "id": "learn-005",
+    "question": "学习 Memory 记忆系统设计",
+    "mode_expectation": "learn",
+    "difficulty": "complex",
+    "should_retrieve": true
+  },
+  {
+    "id": "qa-001",
+    "question": "什么是 RAG",
+    "mode_expectation": "qa",
+    "difficulty": "simple",
+    "should_retrieve": true
+  },
+  {
+    "id": "qa-002",
+    "question": "LangGraph 中的状态机是什么",
+    "mode_expectation": "qa",
+    "difficulty": "simple",
+    "should_retrieve": true
+  },
+  {
+    "id": "qa-003",
+    "question": "Agent 和普通聊天机器人有什么区别",
+    "mode_expectation": "qa",
+    "difficulty": "complex",
+    "should_retrieve": true
+  },
+  {
+    "id": "qa-004",
+    "question": "Prompt 缓存是什么",
+    "mode_expectation": "qa",
+    "difficulty": "simple",
+    "should_retrieve": true
+  },
+  {
+    "id": "qa-005",
+    "question": "Embedding 模型怎么选",
+    "mode_expectation": "qa",
+    "difficulty": "simple",
+    "should_retrieve": true
+  },
+  {
+    "id": "qa-006",
+    "question": "今天天气怎么样",
+    "mode_expectation": "qa",
+    "difficulty": "simple",
+    "should_retrieve": false
+  },
+  {
+    "id": "qa-007",
+    "question": "asdfghjkl 什么意思",
+    "mode_expectation": "qa",
+    "difficulty": "simple",
+    "should_retrieve": false
+  }
+]
