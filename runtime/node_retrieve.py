@@ -3,6 +3,12 @@ RETRIEVE 节点
 负责 RAG 检索增强全流程，产出 retrieved_context 及中间产物
 含 Query Rewrite 层：将上下文依赖查询改写为完整独立查询
 """
+"""
+retrieve_node (入口)
+  ├── rewrite (Query Rewrite：基于对话历史改写查询，解决指代不明)
+  ├── get_retriever (获取向量检索器单例)
+  └── retriever.retrieve (执行向量相似度检索，捞取 Top-K 相关文档)
+"""
 import time
 from typing import Any
 from rag.vector_retriever import get_retriever
@@ -57,10 +63,7 @@ def retrieve_node(state: dict[str, Any]) -> dict[str, Any]:
             "retrieved_context": documents,
             "rag_metadata": {
                 "query_rewrite_latency_ms": rewrite_ms,
-                "vector_search_latency_ms": 0,
-                "rerank_latency_ms": 0,
                 "total_docs_retrieved": len(documents),
-                "total_docs_after_rerank": len(documents),
             },
             "messages": [
                 {

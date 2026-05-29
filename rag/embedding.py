@@ -5,7 +5,7 @@ Embedding Provider
 from abc import ABC, abstractmethod
 import requests
 
-from engine.config import get_config
+from engine.config import get_embedding_config
 
 
 class EmbeddingProvider(ABC):
@@ -31,7 +31,7 @@ class QwenEmbeddingProvider(EmbeddingProvider):
     MODEL_NAME = "text-embedding-v3"
 
     def __init__(self):
-        config = get_config()
+        config = get_embedding_config()
         self.api_key = config["api_key"]
         # base_url 如 https://dashscope.aliyuncs.com/compatible-mode/v1
         # embedding 端点拼接为 {base_url}/embeddings

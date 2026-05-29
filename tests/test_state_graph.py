@@ -23,7 +23,7 @@ def _invoke(graph, initial_state, thread_id="test"):
 
 def test_normal_flow_happy_path(graph):
     """正常输入 → 完整流转 Start→End（LLM 决策可能触发 retry）"""
-    state = create_initial_state("学习 RAG 检索原理")
+    state = create_initial_state("学习 RAG 检索原理（我是入门水平）")
     result = _invoke(graph, state)
     assert result["current_step"] == "REFLECT"
     assert result["retry_count"] >= 1
@@ -34,7 +34,7 @@ def test_normal_flow_happy_path(graph):
 
 def test_normal_flow_produces_plan(graph):
     """PLANNER 节点产出 plan 字段"""
-    state = create_initial_state("学习 Prompt Engineering")
+    state = create_initial_state("学习 Prompt Engineering（我是进阶水平）")
     result = _invoke(graph, state)
     assert result["plan"] is not None
     assert result["plan"]["topic"] is not None
@@ -43,10 +43,10 @@ def test_normal_flow_produces_plan(graph):
 
 def test_normal_flow_produces_decision(graph):
     """DECIDE 节点产出 decision 字段"""
-    state = create_initial_state("任意问题")
+    state = create_initial_state("什么是 RAG")
     result = _invoke(graph, state)
     assert result["decision"] is not None
-    assert result["decision"]["action"] is not None
+    assert result["decision"]["tool_name"] is not None
     assert isinstance(result["decision"]["requires_retrieval"], bool)
 
 
@@ -56,7 +56,7 @@ def test_normal_flow_produces_decision(graph):
 
 def test_error_goes_to_reflect_from_decide(graph):
     """DECIDE 发现错误 → 直接进 REFLECT，跳过检索和工具执行"""
-    state = create_initial_state("测试错误")
+    state = create_initial_state("什么是测试错误")
     state["error"] = "决策模型超时"
     result = _invoke(graph, state)
     assert result["current_step"] == "REFLECT"
@@ -70,7 +70,7 @@ def test_error_goes_to_reflect_from_decide(graph):
 
 def test_retry_loop_replan(graph):
     """REFLECT 返回 retry+PLANNER → 回到 PLANNER 重新规划"""
-    state = create_initial_state("需要重试的问题")
+    state = create_initial_state("需要重试的问题（入门）")
     state["error"] = "计划不充分"
     # 预设 reflection（模拟真实 REFLECT 可能的输出）
     state["reflection"] = {
@@ -87,7 +87,7 @@ def test_retry_loop_replan(graph):
 
 def test_retry_loop_retrieve(graph):
     """REFLECT 返回 retry+RETRIEVE → 重新检索"""
-    state = create_initial_state("检索结果不佳")
+    state = create_initial_state("检索结果不佳（中等）")
     state["decision"] = {"requires_retrieval": True}
     state["error"] = "检索质量低"
     state["reflection"] = {

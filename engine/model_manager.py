@@ -49,17 +49,17 @@ class ModelManager:
         try:
             response = self._client.invoke(prompt)
             elapsed_ms = int((time.time() - start) * 1000)
-            #响应时长
+   
             content = response.content.strip()
             logger = get_logger()
             logger.info(f"[ModelManager] generate: {elapsed_ms}ms, {len(content)} chars")
+            #添加耗时日志
             return content
         except Exception as e:
             elapsed_ms = int((time.time() - start) * 1000)
             raise RuntimeError(
                 f"模型调用失败（{elapsed_ms}ms）: {type(e).__name__}: {e}"
             ) from e
-    #处理常规对话与问答场景(普通文本生成)
     #功能：接收一段完整的提示词（prompt），调用大模型，并返回模型生成的纯文本内容。
 
     def generate_structured(
@@ -92,7 +92,7 @@ class ModelManager:
             logger = get_logger()
             logger.info(f"[ModelManager] generate_structured: {elapsed_ms}ms, type={type(result).__name__}")
             return result
-            #直接返回对象
+
         except Exception as e:
             elapsed_ms = int((time.time() - start) * 1000)
             raise RuntimeError(

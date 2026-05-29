@@ -12,7 +12,6 @@ from interface.api_routes import ChatRequest, handle_chat
 
 app = FastAPI(title="Agent Runtime API", version="1.0")
 
-
 @app.post("/chat")
 def chat(req: ChatRequest):
     """Agent 对话接口：接收问题 → 运行完整状态机 → 返回治理结果"""

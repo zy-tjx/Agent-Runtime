@@ -101,7 +101,7 @@ AGENT RUNTIME/
 │ ├── fastapi_app.py # FastAPI 接口
 │ └── api_routes.py # API 路由定义
 ├── observability/ # 可观测性与日志
-│ ├── langsmith_tracer.py # LangSmith 追踪
+│ ├── tracer.py # LangSmith 追踪
 │ ├── logger.py # 日志系统
 │ └── monitoring.py # 监控与告警
 ├── engine/ # 系统运转的核心动力(配置、Prompt、模型调用、安全)
@@ -127,7 +127,8 @@ AGENT RUNTIME/
 - **LLM 驱动节点**：PLANNER / DECIDE / REFLECT 由 LLM 产出核心数据；LLM 失败时各节点有模板降级兜底
 - **意图分流**：PLANNER 产出 `mode`（learn / qa），learn 走完整 5 节点，qa 走"检索→合成→评估"；工具选择由 DECIDE 负责
 - **答案合成在 EXECUTE**：QA 意图下，EXECUTE 基于 retrieved_context 做受约束答案合成；REFLECT 只评估 groundedness + completeness，不判正确性
-- **治理字段**：AgentState 顶层含 mode / retrieval_score / groundedness_score / completeness_score / answer_source / retry_reason，为 Memory、Eval、LangSmith 铺路
+- **learn 模式 REFLECT 不评估检索质量**：学习计划由 PLANNER 的 LLM 直接生成，不依赖检索结果；因此 learn 模式的 REFLECT 跳过 retrieval_score/retrieval_attempted 信号，仅评估工具执行状态和计划质量；LLM 或规则引擎若建议 retry RETRIEVE，强制改为 retry PLANNER
+- **治理字段**：AgentState 顶层含 mode / retrieval_score / groundedness_score / completeness_score / answer_source / retry_reason / fallback_triggered / fallback_reason / retry_count / error，共 10 个字段
 
 ## Python 环境与导入规范
 本项目使用根目录 `.venv` 虚拟环境。执行 Python 或 Pip 时，必须调用 `.venv/bin/python` 和 `.venv/bin/pip`（Linux/Mac）或 `.venv\Scripts\python.exe`（Windows），禁止直接调用 `python` 或 `pip`。
@@ -206,9 +207,11 @@ AGENT RUNTIME/
 ### 8.1 全局架构
 
 ```
-用户输入 → PLANNER(意图分流) → DECIDE(工具选择) → RETRIEVE(Query Rewrite + FAISS) → EXECUTE(工具执行/QA合成) → REFLECT(规则参谋→LLM司令→规则预备) → END
-                                      ↑                                                                    │
-                                      └──────────────── 规则引擎 + 历史经验反馈 ────────────────────────────┘
+用户输入 → PLANNER(意图分流+水平检测) → DECIDE(工具选择) → RETRIEVE(Query Rewrite + FAISS) → EXECUTE(工具执行/QA合成) → REFLECT(规则参谋→LLM司令→规则预备) → END
+              │         ↑                                                                              │
+              │         └─────────────── retry (PLANNER / RETRIEVE / EXECUTE) ──────────────────────────┘
+              │
+              └── 未说明水平 → 反问用户 → END（下次带水平信息再来，PLANNER 读取长期记忆生成差异化计划）
 ```
 
 降级策略：每个 LLM 驱动节点（PLANNER/DECIDE/REFLECT）有独立的降级路径，LLM 失败时自动切换。REFLECT 降级使用规则引擎结果而非硬编码 end。
@@ -219,35 +222,35 @@ AgentState 治理字段（10 个）：`mode`, `retrieval_score`, `groundedness_s
 
 | 目录 | 文件 | 功能 | 实现方式 |
 |---|---|---|---|
-| **engine/** | `config.py` | 配置管理：读取 .env 统一暴露 api_key/base_url/model_name | `os.getenv()` + 模块级缓存 |
+| **engine/** | `config.py` | 配置管理：读取 .env 统一暴露 LLM 和 Embedding 两套配置（base_url/api_key 可分开） | `os.getenv()` + 模块级缓存；`get_embedding_config()` 独立读取 embedding 端点 |
 | | `model_manager.py` | LLM 调用封装：文本生成 + Pydantic 结构化输出 | `ChatOpenAI` (LangChain)，temperature=0.3，含异常捕获 + logger 记录耗时 |
 | | `prompt_manager.py` | 6 个 Prompt 模板定义 + `render()` 变量替换 + 工具列表格式化 | 字符串常量 + `str.format()` |
 | | `security.py` | 空壳 | — |
-| **runtime/** | `state_manager.py` | AgentState TypedDict（27+ 字段）+ `create_initial_state(user_input, history)` + `validate_state()` | TypedDict + 显式初始化所有字段 |
-| | `state_graph.py` | LangGraph StateGraph 组装：5 节点注册 + 4 条件边 + 编译 | `build_graph()` + `run_graph(user_input, session_id, history)` |
-| | `edge_router.py` | 4 个条件路由函数 + Route 常量（PLANNER/RETRIEVE/EXECUTE/REFLECT/END） | 纯函数，输入 state → 返回下一节点 |
-| | `node_planner.py` | PLANNER：LLM 判断 learn/qa + 生成学习计划；LLM 失败走模板降级 | `_plan_via_llm()` + `_plan_fallback()` + `_format_history()` |
+| **runtime/** | `state_manager.py` | AgentState TypedDict（27+ 字段）+ `create_initial_state(user_input, history)` | TypedDict + 显式初始化所有字段 |
+| | `state_graph.py` | LangGraph StateGraph 组装：5 节点注册 + 5 条件边 + 编译 | `build_graph()` + `run_graph(user_input, session_id, history, user_id)` |
+| | `edge_router.py` | 5 个条件路由函数 + Route 常量（含 `router_after_planner`：反问水平→END） | 纯函数，输入 state → 返回下一节点 |
+| | `node_planner.py` | PLANNER：关键词预判+水平检测+已完成主题查重→ LLM 生成计划；未说明水平时反问用户 | `_detect_level()` + `_plan_via_llm()` + `_plan_fallback()` |
 | | `node_decide.py` | DECIDE：LLM 选工具+生成参数；LLM 失败走关键词规则匹配 | `_decide_via_llm()` + `_decide_via_keyword()` + `_parse_json()` |
 | | `node_retrieve.py` | RETRIEVE：Query Rewrite → FAISS 检索 → 产出 retrieved_context | `rewrite()` + `VectorRetriever.retrieve()` |
 | | `node_execute.py` | EXECUTE：learn 模式执行工具调用；qa 模式 LLM 合成答案；降级取首条文档 | `_execute_tool()` + `_execute_qa()` + `_synthesize_via_llm()` |
-| | `node_reflect.py` | REFLECT：规则引擎(3 模块)→LLM override→规则降级；写入长期记忆 | 调用 error_analysis + improvement_suggestion + self_reflection |
+| | `node_reflect.py` | REFLECT：规则引擎(3 模块)→LLM override→规则降级；learn 满意后标记主题完成 | error_analysis + improvement_suggestion + self_reflection + mark_topic_completed |
 | | `checkpointer.py` | 空壳 | LangGraph MemorySaver 已覆盖 |
 | | `recovery_handler.py` | 空壳 | v3 路由"任何错误→REFLECT"已覆盖 |
-| **tools/** | `tool_registry.py` | `ToolRegistry` + `ToolInfo`：显式注册 5 个 Runtime 工具 | Pydantic `BaseModel` 参数 Schema |
+| **tools/** | `tool_registry.py` | `ToolRegistry` + `ToolInfo`：显式注册 2 个 Runtime 工具（search_docs + memory_write） | Pydantic `BaseModel` 参数 Schema |
 | | `tool_executor.py` | `ToolExecutor`：校验→超时(tenacity)→执行→标准化 `ToolOutput` | Pydantic 校验 + `tenacity.retry` |
 | | `search_docs.py` | 知识检索工具（已被真实 RAG 替代，保留用于 learn 模式） | 关键词匹配文档库 |
 | | `memory_write.py` | `MemoryWriteInput` Schema + `run()`：写入 SQLite 长期记忆 | Pydantic + `long_term_memory.save()` |
 | | `memory_read.py` | `MemoryReadInput` Schema + `run()`：按 key/category 读取长期记忆 | `long_term_memory.load()` |
 | | `context_store.py` | 空壳 | — |
 | | `fallback.py` | 统一兜底工具：返回安全默认回复 | 硬编码安全消息 |
-| **memory/** | `long_term_memory.py` | SQLite 长期记忆：`save()` / `load()` / `load_recent_experiences()` / `load_experience_summaries()` | `sqlite3` 单表 memories(key/value/category/timestamp/session_id) |
+| **memory/** | `long_term_memory.py` | SQLite 长期记忆：`save()` / `load()` / `load_recent_experiences()` / `load_experience_summaries()` + 用户画像 `get_user_profile()` / `mark_topic_completed()` | `sqlite3` 单表 memories(key/value/category/timestamp/session_id) |
 | | `short_term_memory.py` | 空壳 | 短期记忆由 AgentState.short_term_memory["buffer"] 承载 |
 | | `knowledge_memory.py` | 空壳 | 经验数据量级不到触发 |
 | | `vector_store.py` | 空壳 | FAISS 实现在 `rag/vector_store.py` |
 | | `memory_lifecycle.py` | 空壳 | 经验数据量级不到触发 |
-| **rag/** | `document_loader.py` | 加载 data/knowledge/ 下 12 个 MD 文件 + YAML 元数据解析 | `glob` + 正则匹配 `key: value` / `key： value` |
+| **rag/** | `document_loader.py` | 加载 data/knowledge/ 下 12 个 MD 文件 + YAML 元数据解析 | `os.listdir` + `str.partition` 按中/英文冒号切分键值对 |
 | | `text_splitter.py` | 按 `##` 标题语义切分 chunk，chunk_size=500, overlap=50 | 递归按标题层级切分，确保标题完整性 |
-| | `embedding.py` | `EmbeddingProvider` ABC + `QwenEmbeddingProvider`（千问 text-embedding-v3） | HTTP POST + 3 次重试 |
+| | `embedding.py` | `EmbeddingProvider` ABC + `QwenEmbeddingProvider`（千问 text-embedding-v3，独立 endpoint） | HTTP POST + 3 次重试；通过 `get_embedding_config()` 走独立 base_url |
 | | `vector_store.py` | `FAISSVectorStore`：建索引(batch_size=10)、搜索、持久化 save/load | FAISS `IndexFlatIP` + 内存映射 |
 | | `vector_retriever.py` | `VectorRetriever`：统一检索入口，含自动建索引 + 模块级单例 | embedding → FAISS search → 返回 top-K |
 | | `query_rewrite.py` | LLM Query Rewrite：改写含指代词的查询为完整独立查询 | `_needs_rewrite()` 快速跳过 + LLM 改写 + 失败回退原 query |
@@ -259,7 +262,7 @@ AgentState 治理字段（10 个）：`mode`, `retrieval_score`, `groundedness_s
 | | `hallucination_detector.py` | 幻觉检测：3 条规则（接地低+RAG/空上下文/长回答低接地） | 纯规则驱动，阈值可配 |
 | | `eval_metrics.py` | 5 类确定性指标：RAG/工具/回答/流程/治理 | 纯函数，输入最终 AgentState → 输出结构化指标 |
 | **observability/** | `logger.py` | `NodeLogger`：node_start/node_end/node_error 契约，JSON 输出到 stdout | `time.time()` 计时 + 治理字段提取 |
-| | `langsmith_tracer.py` | `TraceCollector` + `trace_node` 包装器 + `reset_tracer` | 记录 node/duration/fields_produced/state_diff/tool_calls |
+| | `tracer.py` | `TraceCollector` + `trace_node` 包装器 + `reset_tracer` | 记录 node/duration/fields_produced/state_diff/tool_calls |
 | | `monitoring.py` | 空壳 | logger + tracer 已覆盖 |
 | **interface/** | `streamlit_app.py` | 治理驾驶舱：输入→回答+节点时序+治理仪表+历史经验+多轮对话 | `st.session_state.messages` 累积历史，最近 5 轮传入 run_graph |
 | | `fastapi_app.py` | FastAPI 应用入口：`POST /chat` 单端点 | 纯透传，零业务逻辑 |

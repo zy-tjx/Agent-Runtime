@@ -11,7 +11,7 @@ from rag.embedding import EmbeddingProvider
 
 # ── 持久化路径 ──
 INDEX_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "vector_store")
-#索引文件路径
+#索引文件夹路径
 INDEX_PATH = os.path.join(INDEX_DIR, "faiss.index")
 #FAISS 库自带的二进制文件（高效存储海量的向量索引数据）
 META_PATH = os.path.join(INDEX_DIR, "chunks_meta.json")
@@ -63,6 +63,45 @@ class FAISSVectorStore:
         self.index.add(embeddings)
         self.chunks_meta = chunks
 
+    # ── 持久化 ──
+
+    def save_index(self, index_dir: str | None = None):
+        """
+        将 FAISS 索引和 chunk 元数据保存到磁盘
+
+        Args:
+            index_dir: 自定义路径，默认 data/vector_store/
+        """
+        if self.index is None:
+            raise RuntimeError("无索引可保存")
+
+        idx_path = os.path.join(index_dir, "faiss.index") if index_dir else INDEX_PATH
+        meta_path = os.path.join(index_dir, "chunks_meta.json") if index_dir else META_PATH
+
+        os.makedirs(os.path.dirname(idx_path), exist_ok=True)
+        faiss.write_index(self.index, idx_path) # 将索引写入二进制文件
+
+        with open(meta_path, "w", encoding="utf-8") as f:
+            json.dump(self.chunks_meta, f, ensure_ascii=False, indent=2) # 将 chunk 元数据保存到 JSON 文件
+
+    def load_index(self, index_dir: str | None = None):
+        """
+        从磁盘加载 FAISS 索引和 chunk 元数据
+
+        Args:
+            index_dir: 自定义路径，默认 data/vector_store/
+        """
+        idx_path = os.path.join(index_dir, "faiss.index") if index_dir else INDEX_PATH
+        meta_path = os.path.join(index_dir, "chunks_meta.json") if index_dir else META_PATH
+
+        if not os.path.exists(idx_path):
+            raise FileNotFoundError(f"索引文件不存在: {idx_path}")
+
+        self.index = faiss.read_index(idx_path)
+
+        with open(meta_path, "r", encoding="utf-8") as f:
+            self.chunks_meta = json.load(f)
+
     # ── 检索 ──
 
     def search(self, query_vector: list[float], top_k: int = 5) -> list[dict]:
@@ -70,7 +109,7 @@ class FAISSVectorStore:
         检索最相似的 top_k 个 chunk
 
         Args:
-            query_vector: 查询向量（需先归一化）
+            query_vector: 查询向量（方法内部自动归一化）
             top_k: 返回数量
 
         Returns:
@@ -101,42 +140,3 @@ class FAISSVectorStore:
                 }
             )
         return results
-
-    # ── 持久化 ──
-
-    def save_index(self, index_dir: str | None = None):
-        """
-        将 FAISS 索引和 chunk 元数据保存到磁盘
-
-        Args:
-            index_dir: 自定义路径，默认 data/vector_store/
-        """
-        if self.index is None:
-            raise RuntimeError("无索引可保存")
-
-        idx_path = os.path.join(index_dir, "faiss.index") if index_dir else INDEX_PATH
-        meta_path = os.path.join(index_dir, "chunks_meta.json") if index_dir else META_PATH
-
-        os.makedirs(os.path.dirname(idx_path), exist_ok=True)
-        faiss.write_index(self.index, idx_path)
-
-        with open(meta_path, "w", encoding="utf-8") as f:
-            json.dump(self.chunks_meta, f, ensure_ascii=False, indent=2)
-
-    def load_index(self, index_dir: str | None = None):
-        """
-        从磁盘加载 FAISS 索引和 chunk 元数据
-
-        Args:
-            index_dir: 自定义路径，默认 data/vector_store/
-        """
-        idx_path = os.path.join(index_dir, "faiss.index") if index_dir else INDEX_PATH
-        meta_path = os.path.join(index_dir, "chunks_meta.json") if index_dir else META_PATH
-
-        if not os.path.exists(idx_path):
-            raise FileNotFoundError(f"索引文件不存在: {idx_path}")
-
-        self.index = faiss.read_index(idx_path)
-
-        with open(meta_path, "r", encoding="utf-8") as f:
-            self.chunks_meta = json.load(f)

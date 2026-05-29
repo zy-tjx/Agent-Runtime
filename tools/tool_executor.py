@@ -5,7 +5,7 @@
 import time
 from typing import Any, Optional
 from pydantic import BaseModel, ValidationError
-from tenacity import stop_after_attempt, wait_fixed, RetryError
+from tenacity import stop_after_attempt, wait_fixed
 
 from tools.tool_registry import ToolRegistry
 
@@ -14,19 +14,14 @@ class ToolOutput(BaseModel):
     """所有工具返回结果的统一结构"""
 
     tool_name: str
-    """工具名称"""
 
     status: str
-    """执行状态：success / failed / timeout"""
 
     result: Any = None
-    """工具执行产出（类型由各工具自行约定）"""
-
+    #工具执行时的具体产出（类型由各工具自行约定）
     error: Optional[str] = None
-    """失败时的错误信息"""
 
     duration_ms: int = 0
-    """工具执行耗时（毫秒）"""
 
 
 class ToolExecutor:
@@ -84,14 +79,6 @@ class ToolExecutor:
             result = retry_decorator(tool.run_func)(validated_input)
             result.duration_ms = int((time.time() - start_time) * 1000)
             return result
-        except RetryError:
-            duration_ms = int((time.time() - start_time) * 1000)
-            return ToolOutput(
-                tool_name=tool_name,
-                status="timeout",
-                error=f"工具执行超时（{duration_ms}ms）",
-                duration_ms=duration_ms,
-            )
         except Exception as e:
             duration_ms = int((time.time() - start_time) * 1000)
             return ToolOutput(

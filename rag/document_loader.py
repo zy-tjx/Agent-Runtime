@@ -4,40 +4,10 @@
 """
 import os
 
-
-def load_documents(directory: str) -> list[dict]:
-    """
-    加载目录下所有 .md 文件
-
-    Args:
-        directory: 知识库目录路径
-
-    Returns:
-        [{filename, content, metadata: {topic, difficulty, keywords, prerequisites}}]
-    """
-    documents = []
-    for filename in sorted(os.listdir(directory)):
-        if not filename.endswith(".md"):
-            continue
-        filepath = os.path.join(directory, filename)
-        content = _read_file(filepath)
-        metadata, body = _parse_frontmatter(content)
-
-        documents.append(
-            {
-                "filename": filename,
-                "content": body.strip(),
-                "metadata": metadata,
-            }
-        )
-    return documents
-
-
 def _read_file(filepath: str) -> str:
     with open(filepath, "r", encoding="utf-8") as f:
         return f.read()
-
-
+    
 def _parse_frontmatter(text: str) -> tuple[dict, str]:
     """
     解析 --- 包围的 YAML 风格元数据头部
@@ -73,3 +43,38 @@ def _parse_frontmatter(text: str) -> tuple[dict, str]:
 
     body = "\n".join(lines[body_start:])
     return metadata, body
+
+def load_documents(directory: str) -> list[dict]:
+    """
+    加载目录下所有 .md 文件
+
+    Args:
+        directory: 知识库目录路径
+
+    Returns:
+        [{filename, content, metadata: {topic, difficulty, keywords, prerequisites}}]
+    """
+    documents = []
+    for filename in sorted(os.listdir(directory)):
+        if not filename.endswith(".md"):
+            continue
+        filepath = os.path.join(directory, filename)
+        content = _read_file(filepath)
+        metadata, body = _parse_frontmatter(content)
+        #body是正文
+        #metadata是头部元数据
+
+        documents.append(
+            {
+                "filename": filename,
+                "content": body.strip(),
+                "metadata": metadata,
+            }
+        )
+    return documents
+
+
+
+
+
+

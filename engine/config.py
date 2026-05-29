@@ -6,8 +6,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-#作用是从 .env 文件加载环境变量，将这些环境变量装进内存
-# 使得在代码中可以通过 os.getenv() 获取这些变量的值。
+#加载环境变量
 
 
 def get_config() -> dict[str, str]:
@@ -31,8 +30,15 @@ def get_config() -> dict[str, str]:
         if not value:
             raise ValueError(
                 f"缺少环境变量 {env_var}，请检查 .env 文件。"
-                f"可参考 .env.example 模板。"
             )
         config[key] = value
 
     return config
+
+
+def get_embedding_config() -> dict[str, str]:
+    """获取 Embedding 相关配置（独立于 LLM 的 base_url/api_key）"""
+    return {
+        "api_key": os.getenv("EMBEDDING_API_KEY", "").strip() or os.getenv("OPENAI_API_KEY", "").strip(),
+        "base_url": os.getenv("EMBEDDING_BASE_URL", "").strip() or os.getenv("OPENAI_BASE_URL", "").strip(),
+    }

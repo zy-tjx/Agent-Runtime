@@ -4,46 +4,16 @@
 """
 from typing import Any
 
-
-def compute_metrics(state: dict[str, Any]) -> dict[str, Any]:
-    """
-    从最终 AgentState 一次性计算所有确定性指标
-
-    Args:
-        state: 图运行结束后的完整 AgentState
-
-    Returns:
-        {
-            "rag": {...},           # RAG 检索指标
-            "tool": {...},          # 工具执行指标
-            "answer": {...},        # 回答质量指标
-            "flow": {...},          # 流程指标
-            "governance": {...},    # 治理字段指标
-        }
-    """
-    return {
-        "rag": _rag_metrics(state),
-        "tool": _tool_metrics(state),
-        "answer": _answer_metrics(state),
-        "flow": _flow_metrics(state),
-        "governance": _governance_metrics(state),
-    }
-
-
 # ── RAG 检索指标 ──
 
 def _rag_metrics(state: dict[str, Any]) -> dict[str, Any]:
     retrieved = state.get("retrieved_context", [])
     score = state.get("retrieval_score")
-    metadata = state.get("rag_metadata") or {}
 
     return {
         "docs_retrieved": len(retrieved),
         "retrieval_score": score,
         "has_context": len(retrieved) > 0,
-        "total_docs_after_rerank": metadata.get("total_docs_after_rerank", len(retrieved)),
-        "vector_search_latency_ms": metadata.get("vector_search_latency_ms", 0),
-        "rerank_latency_ms": metadata.get("rerank_latency_ms", 0),
     }
 
 
@@ -140,3 +110,31 @@ def _governance_metrics(state: dict[str, Any]) -> dict[str, Any]:
         "fallback_triggered": state.get("fallback_triggered", False),
         "fallback_reason": state.get("fallback_reason"),
     }
+
+
+
+def compute_metrics(state: dict[str, Any]) -> dict[str, Any]:
+    """
+    从最终 AgentState 一次性计算所有确定性指标
+
+    Args:
+        state: 图运行结束后的完整 AgentState
+
+    Returns:
+        {
+            "rag": {...},           # RAG 检索指标
+            "tool": {...},          # 工具执行指标
+            "answer": {...},        # 回答质量指标
+            "flow": {...},          # 流程指标
+            "governance": {...},    # 治理字段指标
+        }
+    """
+    return {
+        "rag": _rag_metrics(state),
+        "tool": _tool_metrics(state),
+        "answer": _answer_metrics(state),
+        "flow": _flow_metrics(state),
+        "governance": _governance_metrics(state),
+    }
+
+

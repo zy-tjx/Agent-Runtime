@@ -15,11 +15,44 @@ MAX_RETRIES = "MAX_RETRIES"             #最大重试次数
 NONE = "NONE"                           #无错误
 
 
+
+# ── 内部辅助 ──
+
+def _infer_target_from_fallback(fallback_reason: str | None) -> str:
+    """从降级原因推断应重试哪个节点"""
+    if not fallback_reason:
+        return "PLANNER"
+    reason = fallback_reason.upper()
+    if "PLANNER" in reason:
+        return "PLANNER"
+    if "DECIDE" in reason:
+        return "PLANNER"  # DECIDE 不是合法重试目标，回退到 PLANNER
+    if "REFLECT" in reason:
+        return "PLANNER"  # REFLECT 自身失败，保守回退
+    return "PLANNER"
+
+
+def _end(code: str, rationale: str) -> dict[str, Any]:
+    return {
+        "next_action": "end",
+        "retry_target_node": None,
+        "reason_code": code,
+        "rationale": rationale,
+    }
+
+
+def _retry(code: str, target: str, rationale: str) -> dict[str, Any]:
+    return {
+        "next_action": "retry",
+        "retry_target_node": target,
+        "reason_code": code,
+        "rationale": rationale,
+    }
+
 def suggest(
     error_analysis: dict[str, Any],
     mode: str = "learn",
     groundedness_score: float | None = None,
-    completeness_score: float | None = None,
     hallucination_flag: bool = False,   #是否发生幻觉告警
     fallback_reason: str | None = None, #触发兜底的原因
 ) -> dict[str, Any]:
@@ -30,7 +63,6 @@ def suggest(
         error_analysis: error_analysis.analyze() 的输出
         mode: 当前模式 learn / qa
         groundedness_score: 接地分 0~1
-        completeness_score: 完整度 0~1
         hallucination_flag: 幻觉检测是否触发
         fallback_reason: LLM 降级原因（含节点名）
 
@@ -69,36 +101,3 @@ def suggest(
 
     return _end(NONE, "无错误信号，建议结束")
 
-
-# ── 内部辅助 ──
-
-def _infer_target_from_fallback(fallback_reason: str | None) -> str:
-    """从降级原因推断应重试哪个节点"""
-    if not fallback_reason:
-        return "PLANNER"
-    reason = fallback_reason.upper()
-    if "PLANNER" in reason:
-        return "PLANNER"
-    if "DECIDE" in reason:
-        return "PLANNER"  # DECIDE 不是合法重试目标，回退到 PLANNER
-    if "REFLECT" in reason:
-        return "PLANNER"  # REFLECT 自身失败，保守回退
-    return "PLANNER"
-
-
-def _end(code: str, rationale: str) -> dict[str, Any]:
-    return {
-        "next_action": "end",
-        "retry_target_node": None,
-        "reason_code": code,
-        "rationale": rationale,
-    }
-
-
-def _retry(code: str, target: str, rationale: str) -> dict[str, Any]:
-    return {
-        "next_action": "retry",
-        "retry_target_node": target,
-        "reason_code": code,
-        "rationale": rationale,
-    }

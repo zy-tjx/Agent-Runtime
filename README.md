@@ -2,32 +2,42 @@
 
 **一个用于系统性理解和训练 Agent Engineering 核心能力的实验平台。不是聊天机器人，是一个可观测、可评估、可对比的 Runtime 治理系统。**
 
+### 亮点
+
+- **基于用户画像的自适应学习路径**：长期记忆（SQLite）记录每个用户的学习进度和已完成主题，PLANNER 根据用户水平（入门/中等/进阶）生成差异化学习计划，已学主题自动避重
+- **三层反思决策链**：规则引擎（纯函数）预分析 → LLM 综合判断（可覆盖规则） → 规则引擎降级兜底，REFLECT 是整个系统唯一的重试决策点
+- **LLM 全链路降级容错**：每个 LLM 驱动节点都有独立降级路径，全面崩溃仍返回有效状态，已通过 7 项异常压测验证
+- **确定性评估与 A/B 对比**：12 题 Golden Dataset + 批量运行器 + 聚合报告（P50/P95/分组分析），支持双报告对比验证改动效果
+
 ---
 
 ## 架构总览
 
 ```
-用户输入 → PLANNER(意图分流) → DECIDE(工具选择) → RETRIEVE(Query Rewrite + FAISS) → EXECUTE(执行/合成) → REFLECT(规则引擎+LLM双层反思) → END
-                                      ↑                                                                            │
-                                      └──────────── 规则引擎 + 历史经验反馈 ──────────────────────────────────────────┘
+用户输入 → PLANNER(意图分流+水平检测) → DECIDE(工具选择) → RETRIEVE(Query Rewrite + FAISS) → EXECUTE(执行/合成) → REFLECT(规则参谋→LLM司令→规则预备) → END
+              │         ↑                                                                              │
+              │         └───────────────── retry (PLANNER / RETRIEVE / EXECUTE) ────────────────────────┘
+              │
+              └── 未说明水平 → 反问用户 → END（等用户回复水平后下一轮再生成计划）
 ```
 
 ### 5 节点状态机
 
 | 节点 | 职责 | 驱动方式 |
 |---|---|---|
-| **PLANNER** | 意图分类（learn/qa）+ 学习计划生成 | LLM（qwen-plus），失败降级模板匹配 |
+| **PLANNER** | 意图分类（learn/qa）+ 水平检测 + 学习计划生成；未说明水平时反问用户 | LLM + 关键词预判 + 长期记忆画像 |
 | **DECIDE** | 工具选择 + 参数生成 | LLM，失败降级关键词规则 |
 | **RETRIEVE** | Query Rewrite + FAISS 向量检索 + 质量阈值过滤 | LLM 改写 + Embedding 检索 |
 | **EXECUTE** | 工具执行 / QA 受约束答案合成 | LLM 合成，失败降级首条文档 |
-| **REFLECT** | 规则引擎预分析 → LLM 综合判断 → 规则引擎降级 | 三层决策链：参谋→司令→预备 |
+| **REFLECT** | 规则引擎预分析 → LLM 综合判断 → 规则引擎降级；learn 模式标记学习进度 | 三层决策链 + 长期记忆回写 |
 
 ### 核心设计决策
 
 - **REFLECT 是唯一重试决策点**：任何节点出错不进本地重试，统一进 REFLECT 判断 retry/end，`retry_count` 由 REFLECT 自增
 - **LLM 双轨降级**：PLANNER/DECIDE/REFLECT 每个 LLM 调用都有独立的确定性降级路径，全面崩溃仍可返回有效状态
 - **检索质量阈值 0.45**：FAISS 内积 < 0.45 自动清空检索结果，避免对领域外问题的无效重试
-- **治理字段透传**：10 个治理信号（groundedness/completeness/fallback/hallucination 等）贯穿全部节点，供 Eval/Memory/LangSmith 消费
+- **learn 模式不评估检索质量**：学习计划由 LLM 直接生成，REFLECT 跳过检索分数评估，retry 不建议 RETRIEVE
+- **治理字段透传**：10 个治理信号（groundedness/completeness/fallback/hallucination 等）贯穿全部节点
 - **规则优先**：`error_analysis` + `improvement_suggestion` + `self_reflection` 三个纯函数模块在 LLM 调用前产出结构化建议
 
 ---
@@ -38,11 +48,13 @@
 # 安装依赖
 pip install -r requirements.txt
 
-# 配置 API（阿里云千问百炼）
-cp .env.example .env  # 编辑填入 DASHSCOPE_API_KEY
-# 内容：OPENAI_API_KEY=sk-xxx
-#       OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-#       MODEL_NAME=qwen-plus
+# 配置 LLM（Ollama 本地） + Embedding（千问）
+# .env 内容：
+#   OPENAI_API_KEY=ollama
+#   OPENAI_BASE_URL=http://localhost:11434/v1
+#   MODEL_NAME=qwen2.5:latest
+#   EMBEDDING_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+#   EMBEDDING_API_KEY=sk-xxx  # 千问 API Key
 
 # 构建 FAISS 索引（首次运行自动触发）
 python -c "from rag.vector_retriever import get_retriever; get_retriever()"

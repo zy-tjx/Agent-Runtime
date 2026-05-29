@@ -36,6 +36,7 @@ def report(results_file: str = DEFAULT_RESULTS) -> dict:
     retrieval_scores = _nums("retrieval_score")
     groundedness = _nums("groundedness_score")
     completeness = _nums("completeness_score")
+    confidence_scores = _nums("confidence")
     durations = [r["run_duration_ms"] for r in results]
     fallback_count = sum(1 for r in success if r["actual"].get("fallback_triggered"))
     hallucination_count = sum(1 for r in success if r.get("hallucination", {}).get("flag"))
@@ -51,6 +52,7 @@ def report(results_file: str = DEFAULT_RESULTS) -> dict:
         "retrieval_score": _dist(retrieval_scores),
         "groundedness_score": _dist(groundedness),
         "completeness_score": _dist(completeness),
+        "confidence": _dist(confidence_scores),
         "fallback_rate": fallback_count / len(success) if success else 0,
         "hallucination_rate": hallucination_count / len(success) if success else 0,
     }
@@ -92,6 +94,8 @@ def compare(file_a: str, file_b: str, label_a: str = "A", label_b: str = "B") ->
         ("平均检索分", f"{sa['retrieval_score']['mean']:.3f}", f"{sb['retrieval_score']['mean']:.3f}"),
         ("平均接地分", f"{sa['groundedness_score']['mean']:.3f}", f"{sb['groundedness_score']['mean']:.3f}"),
         ("平均完整度", f"{sa['completeness_score']['mean']:.3f}", f"{sb['completeness_score']['mean']:.3f}"),
+        ("平均置信度", f"{sa['confidence']['mean']:.3f}" if sa['confidence']['count'] > 0 else "N/A",
+         f"{sb['confidence']['mean']:.3f}" if sb['confidence']['count'] > 0 else "N/A"),
         ("降级率", f"{sa['fallback_rate']:.1%}", f"{sb['fallback_rate']:.1%}"),
         ("幻觉率", f"{sa['hallucination_rate']:.1%}", f"{sb['hallucination_rate']:.1%}"),
     ]
@@ -159,11 +163,14 @@ def _group_stats(records: list) -> dict:
                  if r["actual"].get("retrieval_score") is not None]
     grounded = [r["actual"].get("groundedness_score") for r in records
                 if r["actual"].get("groundedness_score") is not None]
+    confidence = [r["actual"].get("confidence") for r in records
+                  if r["actual"].get("confidence") is not None]
     fallback = sum(1 for r in records if r["actual"].get("fallback_triggered"))
     return {
         "count": len(records),
         "avg_retrieval": round(_mean(retrieval), 3) if retrieval else None,
         "avg_groundedness": round(_mean(grounded), 3) if grounded else None,
+        "avg_confidence": round(_mean(confidence), 3) if confidence else None,
         "fallback_count": fallback,
     }
 
@@ -179,7 +186,8 @@ def _print_report(r: dict) -> None:
 
     # 分数分布
     print("── 分数分布（mean / P50 / P95） ──")
-    for label, key in [("检索分", "retrieval_score"), ("接地分", "groundedness_score"), ("完整度", "completeness_score")]:
+    for label, key in [("检索分", "retrieval_score"), ("接地分", "groundedness_score"),
+                         ("完整度", "completeness_score"), ("置信度", "confidence")]:
         d = s[key]
         if d["count"] > 0:
             print(f"  {label}: {d['mean']} / {d['p50']} / {d['p95']}  (n={d['count']})")
@@ -199,12 +207,12 @@ def _print_report(r: dict) -> None:
     print("── 按模式 ──")
     for mode, gs in r["by_mode"].items():
         print(f"  {mode}: {gs['count']}题, 检索均分={gs['avg_retrieval']}, "
-              f"接地均分={gs['avg_groundedness']}, 降级={gs['fallback_count']}")
+              f"接地均分={gs['avg_groundedness']}, 置信均分={gs['avg_confidence']}, 降级={gs['fallback_count']}")
 
     print("── 按难度 ──")
     for diff, gs in r["by_difficulty"].items():
         print(f"  {diff}: {gs['count']}题, 检索均分={gs['avg_retrieval']}, "
-              f"接地均分={gs['avg_groundedness']}")
+              f"接地均分={gs['avg_groundedness']}, 置信均分={gs['avg_confidence']}")
 
     print("── 按检索命中预期 ──")
     for hit, gs in r["by_retrieve"].items():

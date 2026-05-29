@@ -58,7 +58,7 @@ DECIDE_ARGUMENTS = """你是一个 Agent 系统的参数生成模块。
 # PLANNER 节点模板
 # ============================================================
 
-PLANNER_PLAN = """你是一个智能 Agent 系统的规划模块。
+PLANNER_PLAN = """你是一个 Agent 系统的规划模块。
 
 首先判断用户意图，然后根据模式生成对应的计划。
 
@@ -70,6 +70,9 @@ PLANNER_PLAN = """你是一个智能 Agent 系统的规划模块。
 
 【用户水平】
 {user_level}
+
+【已完成主题（避免重复推荐）】
+{completed_topics}
 
 【学习目标】
 {goals}
@@ -220,7 +223,7 @@ REFLECT_QA_EVAL = """你是一个 QA 质量评估模块。
 def render(template_name: str, **kwargs) -> str:
     """
     用变量填充 Prompt 模板
-    其实就是将提示词模版里面的 {变量名} 根据**kwargs替换成对应的值
+    将提示词模版里面的 {变量名} 根据**kwargs替换成对应的值
     返回完整的 Prompt 字符串
     Args:
         template_name: 模板名，如 "decide_tool_selection" / "decide_arguments"
@@ -244,7 +247,7 @@ def render(template_name: str, **kwargs) -> str:
         raise ValueError(f"未知模板: {template_name}，可用: {list(templates.keys())}")
 
     return template.format(**kwargs)
-#功能是：实现提示词模版复用，
+# 功能：实现提示词模版复用，
 # render模式实现了根据模板名称和传入的变量动态生成完整的提示词字符串，
 # 方便在不同节点调用时使用统一的模版结构，同时又能灵活替换其中的内容。
 

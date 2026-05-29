@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import streamlit as st
 import time as _time
-# 确保 FAISS 索引为最新（强制重建快过期索引）
+# 确保 FAISS 索引已加载
 import rag.vector_retriever as _vrm
 _vrm._retriever = None
 _vrm.get_retriever()
@@ -27,7 +27,7 @@ def _get_detect_hallucination():
     return _dh
 
 def _get_tracer():
-    from observability.langsmith_tracer import get_tracer as _gt
+    from observability.tracer import get_tracer as _gt
     return _gt()
 
 def _get_experience_summaries(limit, mode):
@@ -106,7 +106,9 @@ def render_governance_dashboard(
     else:
         st.success("未检测到幻觉")
 
-    st.metric("综合置信度", f"{hallucination['evidence'].get('groundedness_score') or 0.5:.2f}")
+    confidence = (result.get("reflection") or {}).get("confidence")
+    st.metric("综合置信度", f"{confidence:.2f}" if confidence is not None else "N/A",
+              help="四因子加权: 接地×0.4 + 完整×0.3 − 降级×0.2 − 幻觉×0.3")
 
 
 def render_experience_ref(mode: str) -> None:
@@ -144,11 +146,14 @@ def _build_history(n: int = 10) -> list[dict]:
 # 输入区
 # ============================================================
 
-col_input, col_btn, col_clear = st.columns([4.5, 1, 0.8])
+col_user, col_input, col_btn, col_clear = st.columns([1, 3.5, 1, 0.8])
+with col_user:
+    user_id = st.text_input("用户", value="default-user", key="user_id",
+                            help="用于区分不同用户的学习进度")
 with col_input:
     user_input = st.text_input(
         "输入问题",
-        placeholder="例如：什么是 RAG？追问：那它和普通搜索有什么区别？",
+        placeholder="例如：学习 LangGraph（我是入门水平）",
         key="input_box",
     )
 with col_btn:
@@ -183,7 +188,8 @@ if send and user_input.strip():
     with st.spinner("Agent 运行中..."):
         result = _get_run_graph()(user_input.strip(),
                            session_id=st.session_state.session_id,
-                           history=history)
+                           history=history,
+                           user_id=user_id.strip() or "default-user")
         metrics = _get_compute_metrics()(result)
         tracer = _get_tracer()
         trace_summary = tracer.summary()
