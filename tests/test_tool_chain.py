@@ -15,9 +15,6 @@ from tools.tool_registry import ToolRegistry, create_default_registry
 from tools.tool_executor import ToolExecutor
 from tools.search_docs import SearchDocsInput, run as search_run
 from tools.memory_write import MemoryWriteInput, run as mw_run
-from tools.memory_read import MemoryReadInput, run as mr_run
-from tools.context_store import ContextStoreInput, run as cs_run
-from tools.fallback import FallbackInput, run as fb_run
 from runtime.node_decide import decide_node
 from runtime.node_execute import execute_node
 
@@ -31,9 +28,6 @@ def registry():
     r = ToolRegistry()
     r.register("search_docs", "检索知识库", SearchDocsInput, search_run)
     r.register("memory_write", "写入长期记忆", MemoryWriteInput, mw_run)
-    r.register("memory_read", "读取长期记忆", MemoryReadInput, mr_run)
-    r.register("context_store", "会话状态持久化", ContextStoreInput, cs_run)
-    r.register("fallback", "统一兜底", FallbackInput, fb_run)
     return r
 
 
@@ -47,10 +41,10 @@ def executor(registry):
 # ============================================================
 
 class TestToolRegistry:
-    def test_register_five_tools(self, registry):
-        """注册 5 个工具后列表返回 5 个"""
-        assert len(registry) == 5
-        assert len(registry.list_tools()) == 5
+    def test_register_two_tools(self, registry):
+        """注册 2 个工具后列表返回 2 个"""
+        assert len(registry) == 2
+        assert len(registry.list_tools()) == 2
 
     def test_exists(self, registry):
         """exists 正确判断"""
@@ -84,10 +78,10 @@ class TestToolRegistry:
         assert search["parameters"]["top_k"]["required"] is False
 
     def test_create_default_registry(self):
-        """工厂函数返回预注册 5 个工具的 registry"""
+        """工厂函数返回预注册工具的 registry"""
         reg = create_default_registry()
-        assert len(reg) == 5
-        for name in ["search_docs", "memory_write", "memory_read", "context_store", "fallback"]:
+        assert len(reg) == 2
+        for name in ["search_docs", "memory_write"]:
             assert reg.exists(name)
 
 
@@ -124,7 +118,7 @@ class TestSearchDocs:
 
 
 # 旧业务工具（create_plan / update_progress / summarize_note / generate_quiz）已移除。
-# 新 Runtime 工具（memory_write / memory_read / context_store / fallback）在 Memory Phase 实现后测试。
+# 工具链精简至 2 个：search_docs（learn 模式） + memory_write（REFLECT 直接调用）。
 
 
 # ============================================================
@@ -205,7 +199,7 @@ class TestDecideNode:
         state = {"user_input": "学习 AI", "plan": {}}
         result = decide_node(state)
         d = result["decision"]
-        for field in ["tool_name", "arguments", "reason", "confidence", "requires_retrieval", "action"]:
+        for field in ["tool_name", "arguments", "reason", "confidence", "requires_retrieval"]:
             assert field in d, f"缺少字段: {field}"
 
 

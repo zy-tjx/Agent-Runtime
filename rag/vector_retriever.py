@@ -9,7 +9,7 @@ from observability.logger import get_logger
 
 class VectorRetriever:
     """
-    检索入口，替换 search_docs Mock
+    检索器封装类
 
     用法:
         retriever = VectorRetriever()
@@ -20,17 +20,15 @@ class VectorRetriever:
 
     def __init__(self):
 
-        # 初始化向量存储和嵌入提供者
-        self.store = FAISSVectorStore()  # 创建 FAISS 向量数据库实例
-        self.provider = QwenEmbeddingProvider()  # 创建 Qwen 嵌入模型实例
+        # 初始化向量存储库和嵌入提供者
+        self.store = FAISSVectorStore()
+        self.provider = QwenEmbeddingProvider()
 
     def ensure_index_ready(self) -> None:
         """确保索引已加载，不存在则自动构建"""
         try:
-            # 尝试加载已存在的索引
             self.store.load_index()
         except FileNotFoundError:
-            # 如果索引不存在，则构建并保存新索引
             self._build_and_save()
 
     def _build_and_save(self) -> None:
@@ -72,7 +70,7 @@ class VectorRetriever:
 
 _retriever: VectorRetriever | None = None
 
-
+# 对外暴露的索引检索接口
 def get_retriever() -> VectorRetriever:
     global _retriever
     if _retriever is None:

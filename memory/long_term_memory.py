@@ -1,6 +1,6 @@
 """
 长期记忆存储层
-纯存取：追加（save） + 查询（load），不做总结/推理/合并
+纯存取：追加（save） + 查询（load）
 
 数据库文件：项目根目录 memory/long_term.db
 表结构：key TEXT PK | value TEXT(JSON) | category TEXT | timestamp TEXT | session_id TEXT
@@ -24,14 +24,6 @@ def _ensure_db_dir():
     os.makedirs(DB_DIR, exist_ok=True)
 #确保数据库目录存在
 
-def _get_connection() -> sqlite3.Connection:
-    _ensure_db_dir()    #创建数据库目录（如果不存在）
-    conn = sqlite3.connect(DB_PATH)    
-    conn.row_factory = sqlite3.Row  #创建数据库文件
-    _init_table(conn)   #建表
-    return conn
-# 获取数据库连接，并确保表结构存在
-
 def _init_table(conn: sqlite3.Connection):
     conn.execute("""
         CREATE TABLE IF NOT EXISTS memories (
@@ -44,6 +36,13 @@ def _init_table(conn: sqlite3.Connection):
     """)
     conn.commit()
 
+def _get_connection() -> sqlite3.Connection:
+    _ensure_db_dir()    #创建数据库目录（如果不存在）
+    conn = sqlite3.connect(DB_PATH)    
+    conn.row_factory = sqlite3.Row  #创建数据库文件
+    _init_table(conn)   #建表
+    return conn
+# 获取数据库连接，并确保表结构存在
 
 # ============================================================
 # 统一 Schema
@@ -55,7 +54,7 @@ class MemoryRecord(BaseModel):
     value: dict = Field(description="记忆内容，JSON 可序列化")
     category: str = Field(
         default="experience",
-        description="记忆类别：profile / progress / experience / session"
+        description="记忆类别：profile（用户画像）/ experience（反思经验）"
     )
     timestamp: str = Field(default="", description="ISO 时间戳")
     session_id: Optional[str] = Field(default=None, description="关联会话 ID")
@@ -98,6 +97,14 @@ def save(record: MemoryRecord) -> bool:
     conn.close()
     return True
 
+def _row_to_dict(row) -> dict:
+    return {
+        "key": row["key"],
+        "value": json.loads(row["value"]),
+        "category": row["category"],
+        "timestamp": row["timestamp"],
+        "session_id": row["session_id"],
+    }
 
 def load(
     key: Optional[str] = None,
@@ -135,16 +142,24 @@ def load(
 
     conn.close()
     return [_row_to_dict(r) for r in rows]
+# ——用户画像（提供Planner 避免重复推荐已学内容）
+def get_user_profile(user_id: str = "default") -> dict:
+    """获取用户已完成的主题列表"""
+    records = load(key=f"profile_{user_id}")
+    if records:
+        return records[0]["value"]
+    return {"topics_completed": []}
 
 
-def _row_to_dict(row) -> dict:
-    return {
-        "key": row["key"],
-        "value": json.loads(row["value"]),
-        "category": row["category"],
-        "timestamp": row["timestamp"],
-        "session_id": row["session_id"],
-    }
+def mark_topic_completed(user_id: str, topic: str) -> None:
+    """标记主题为已完成（fire-and-forget，失败不抛异常）"""
+    profile = get_user_profile(user_id)
+    if topic not in profile.get("topics_completed", []):
+        profile.setdefault("topics_completed", []).append(topic)
+    try:
+        save(MemoryRecord(key=f"profile_{user_id}", value=profile, category="profile"))
+    except Exception:
+        pass
 
 
 # ── 经验检索（供 REFLECT 使用） ──

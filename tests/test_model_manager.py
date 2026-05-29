@@ -51,6 +51,7 @@ class TestPromptManager:
             "decide_tool_selection",
             user_input="测试输入",
             tools_list="- name: search_docs",
+            conversation_history="无历史对话",
         )
         assert "测试输入" in prompt
         assert "search_docs" in prompt

@@ -1,37 +1,44 @@
 [
   {
     "id": "learn-001",
-    "question": "学习 LangGraph 状态机原理",
+    "question": "学习 LangGraph 状态机原理（我是入门水平）",
     "mode_expectation": "learn",
     "difficulty": "complex",
     "should_retrieve": true
   },
   {
     "id": "learn-002",
-    "question": "帮我规划 Agent 系统的学习路线",
+    "question": "帮我规划 Agent 系统学习路线（我是进阶水平）",
     "mode_expectation": "learn",
     "difficulty": "complex",
     "should_retrieve": true
   },
   {
     "id": "learn-003",
-    "question": "学习 Prompt 工程",
+    "question": "学习 Prompt 工程（我是中等水平）",
     "mode_expectation": "learn",
     "difficulty": "simple",
     "should_retrieve": true
   },
   {
     "id": "learn-004",
-    "question": "我想了解 RAG 检索增强生成",
+    "question": "学习 RAG 检索增强生成",
     "mode_expectation": "learn",
     "difficulty": "simple",
     "should_retrieve": true
   },
   {
     "id": "learn-005",
-    "question": "学习 Memory 记忆系统设计",
+    "question": "我想了解 Agent Memory 和记忆系统设计",
     "mode_expectation": "learn",
     "difficulty": "complex",
+    "should_retrieve": true
+  },
+  {
+    "id": "learn-006",
+    "question": "学习向量数据库和 Embedding",
+    "mode_expectation": "learn",
+    "difficulty": "simple",
     "should_retrieve": true
   },
   {
@@ -43,7 +50,7 @@
   },
   {
     "id": "qa-002",
-    "question": "LangGraph 中的状态机是什么",
+    "question": "LangGraph 中的状态机怎么工作",
     "mode_expectation": "qa",
     "difficulty": "simple",
     "should_retrieve": true
@@ -57,27 +64,34 @@
   },
   {
     "id": "qa-004",
-    "question": "Prompt 缓存是什么",
+    "question": "RAG 管道的检索和生成环节各起什么作用",
     "mode_expectation": "qa",
-    "difficulty": "simple",
+    "difficulty": "complex",
     "should_retrieve": true
   },
   {
     "id": "qa-005",
-    "question": "Embedding 模型怎么选",
+    "question": "向量数据库和传统数据库的区别是什么",
     "mode_expectation": "qa",
     "difficulty": "simple",
     "should_retrieve": true
   },
   {
     "id": "qa-006",
+    "question": "Embedding 模型怎么选",
+    "mode_expectation": "qa",
+    "difficulty": "simple",
+    "should_retrieve": true
+  },
+  {
+    "id": "qa-007",
     "question": "今天天气怎么样",
     "mode_expectation": "qa",
     "difficulty": "simple",
     "should_retrieve": false
   },
   {
-    "id": "qa-007",
+    "id": "qa-008",
     "question": "asdfghjkl 什么意思",
     "mode_expectation": "qa",
     "difficulty": "simple",

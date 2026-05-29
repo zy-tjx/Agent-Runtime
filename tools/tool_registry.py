@@ -89,15 +89,12 @@ class ToolRegistry:
 
 def create_default_registry() -> ToolRegistry:
     """
-    创建预注册全部 5 个 Runtime 工具的注册表
+    创建预注册 Runtime 工具的注册表
 
     供 DECIDE、EXECUTE 等节点使用，避免各节点重复维护注册逻辑。
     """
     from tools.search_docs import SearchDocsInput, run as search_run
     from tools.memory_write import MemoryWriteInput, run as mw_run
-    from tools.memory_read import MemoryReadInput, run as mr_run
-    from tools.context_store import ContextStoreInput, run as cs_run
-    from tools.fallback import FallbackInput, run as fb_run
 
     registry = ToolRegistry()
     registry.register(
@@ -105,14 +102,5 @@ def create_default_registry() -> ToolRegistry:
     )
     registry.register(
         "memory_write", "写入长期记忆（用户画像/进度/经验）", MemoryWriteInput, mw_run
-    )
-    registry.register(
-        "memory_read", "读取长期记忆", MemoryReadInput, mr_run
-    )
-    registry.register(
-        "context_store", "会话状态持久化（保存/恢复）", ContextStoreInput, cs_run
-    )
-    registry.register(
-        "fallback", "统一兜底回答，所有降级路径的最终出口", FallbackInput, fb_run
     )
     return registry

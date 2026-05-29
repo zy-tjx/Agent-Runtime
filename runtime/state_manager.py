@@ -1,6 +1,6 @@
 """
 State Schema 定义与状态管理辅助函数
-AgentState 是整个系统的"血液"，所有节点通过它交换数据
+AgentState 是整个系统的全局状态，所有节点通过它交换数据
 """
 from typing import TypedDict, Optional, Annotated, Any
 from langgraph.graph.message import add_messages
@@ -47,6 +47,7 @@ class AgentState(TypedDict, total=False):
     recovery_action: Optional[str]
     """恢复策略标记：retry / fallback / guardrail / escalate"""
     #重试 / 降级 / 护栏 / 升级
+    #当前项目只有重试与降级这两种
 
     # ── PLANNER 节点产出（配合 tools/create_plan） ──
     plan: Optional[dict[str, Any]]
@@ -66,9 +67,7 @@ class AgentState(TypedDict, total=False):
     decision: Optional[dict[str, Any]]
     """策略决策结构：
     {
-        "action": str,          # search_docs / memory_write / memory_read /
-                                # context_store / fallback / direct_answer
-        "tool_name": str,       # 具体工具名称
+        "tool_name": str,       # 选定工具名称
         "arguments": dict,      # 传递给工具的参数字典
         "reason": str,          # 决策理由
         "confidence": float,    # 决策置信度 0.0~1.0
@@ -96,7 +95,7 @@ class AgentState(TypedDict, total=False):
     ]
     """
 
-    # ── RAG 中间产物（配合 rag/，可观测性与错误归因用） ──
+    # ── RAG 中间产物（配合 rag/，可观测性与错误归因用） ──以下字段当前项目没有用到
     vector_search_results: list[dict[str, Any]]
     """向量检索原始结果（重排序前）：
     [
@@ -179,7 +178,7 @@ class AgentState(TypedDict, total=False):
     """答案对用户问题的覆盖度 0.0~1.0（REFLECT 评估）"""
 
     answer_source: Optional[str]
-    """答案来源标记：rag / llm_fallback / tool_result（EXECUTE 写入）"""
+    """答案来源标记：rag / llm_fallback """
 
     retry_reason: Optional[str]
     """重试原因（REFLECT 写入，供 Memory 积累经验）"""
@@ -195,13 +194,11 @@ class AgentState(TypedDict, total=False):
     """当前会话的短期记忆缓冲区：
     {
         "session_id": str,
-        "buffer": list[dict],       # 近 N 轮对话摘要
-        "pending_tool_chain": Optional[list],  # 未完成的工具链步骤
-        "checkpoint": Optional[str] # 当前断点信息
+        "buffer": list[dict],       # 最近 N 轮对话历史 [{role, content}, ...]
     }
     """
 
-    # ── Memory 长期记忆（配合 memory/long_term_memory） ──
+    # ── Memory 长期记忆（配合 memory/long_term_memory） ──当前字段没用到
     long_term_memory: dict[str, Any]
     """从长期存储加载的用户级记忆：
     {
@@ -212,17 +209,14 @@ class AgentState(TypedDict, total=False):
         "last_updated": str         # ISO 时间戳
     }
     """
+    """长期记忆字段（全都没用，预留）。当前长期记忆直接走 SQLite，不通过 State 中转"""
 
     # ── RAG 链路元数据（可观测性用） ──
     rag_metadata: Optional[dict[str, Any]]
-    """RAG 检索元数据，供 observability/langsmith_tracer 使用：
-    其实就是RAG系统准备的一份性能账单
+    """RAG 检索元数据：
     {
         "query_rewrite_latency_ms": int,    查询改写耗时
-        "vector_search_latency_ms": int,    向量搜索耗时
-        "rerank_latency_ms": int,           重排序耗时
-        "total_docs_retrieved": int,        初步检索到的文档总数
-        "total_docs_after_rerank": int      重排序后保留给大模型的文档数
+        "total_docs_retrieved": int,        检索到的文档总数
     }
     """
 
@@ -280,42 +274,3 @@ def create_initial_state(
     )
 
 
-def validate_state(state: AgentState) -> tuple[bool, Optional[str]]:
-    """
-    校验 State 基本完整性
-    返回 (is_valid, error_message)
-    """
-    if state.get("user_input") is None or state["user_input"].strip() == "":
-        return False, "user_input 不能为空"
-
-    if state.get("retry_count", 0) > state.get("max_retries", 3):
-        return False, (
-            f"retry_count({state['retry_count']}) 超出 "
-            f"max_retries({state['max_retries']})"
-        )
-
-    valid_steps = {"START", "PLANNER", "DECIDE", "RETRIEVE", "EXECUTE", "REFLECT", "END"}
-    step = state.get("current_step")
-    if step and step not in valid_steps:
-        return False, f"非法的 current_step: {step}，合法值: {valid_steps}"
-
-    return True, None
-
-
-def get_error_info(state: AgentState) -> dict[str, Any]:
-    """提取当前错误上下文，供 recovery_handler 使用"""
-    return {
-        "error": state.get("error"),
-        "retry_count": state.get("retry_count", 0),
-        "max_retries": state.get("max_retries", 3),
-        "current_step": state.get("current_step", "UNKNOWN"),
-        "recovery_action": state.get("recovery_action"),
-    }
-
-
-def reset_error() -> dict[str, Any]:
-    """清除错误状态，用于重试前调用（返回 Partial State）"""
-    return {
-        "error": None,
-        "recovery_action": None,
-    }

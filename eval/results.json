@@ -1,9 +1,9 @@
 {
-  "total_duration_ms": 92054,
+  "total_duration_ms": 260430,
   "results": [
     {
       "id": "learn-001",
-      "question": "学习 LangGraph 状态机原理",
+      "question": "学习 LangGraph 状态机原理（我是入门水平）",
       "expected": {
         "mode": "learn",
         "difficulty": "complex",
@@ -11,10 +11,11 @@
       },
       "actual": {
         "mode": "learn",
-        "final_output": "学习计划已完成。评估置信度：0.85",
-        "retrieval_score": 0.43265385627746583,
+        "final_output": "## LangGraph状态机原理\n\n**学习目标**：理解LangGraph状态机的基本概念；掌握状态转换的逻辑与应用；能够设计简单的LangGraph状态机\n\n### 模块1：LangGraph状态机基础介绍（60分钟）\n学习LangGraph状态机的基本定义、组成部分（如状态、事件、动作等）以及它们之间的关系。通过实例了解状态机的工作流程。\n\n### 模块2：状态转换逻辑深入解析（90分钟）",
+        "retrieval_score": 0.7288154006004334,
         "groundedness_score": null,
         "completeness_score": null,
+        "confidence": 0.8,
         "answer_source": null,
         "retry_count": 1,
         "error": null,
@@ -24,11 +25,8 @@
       "metrics": {
         "rag": {
           "docs_retrieved": 5,
-          "retrieval_score": 0.43265385627746583,
-          "has_context": true,
-          "total_docs_after_rerank": 5,
-          "vector_search_latency_ms": 0,
-          "rerank_latency_ms": 0
+          "retrieval_score": 0.7288154006004334,
+          "has_context": true
         },
         "tool": {
           "tool_calls_total": 1,
@@ -42,7 +40,7 @@
         },
         "answer": {
           "has_answer": true,
-          "answer_length_chars": 18,
+          "answer_length_chars": 378,
           "answer_source": null,
           "is_rag_sourced": false,
           "is_fallback": false
@@ -66,7 +64,7 @@
         },
         "governance": {
           "mode": "learn",
-          "retrieval_score": 0.43265385627746583,
+          "retrieval_score": 0.7288154006004334,
           "groundedness_score": null,
           "completeness_score": null,
           "answer_source": null,
@@ -88,15 +86,15 @@
           "execute",
           "reflect"
         ],
-        "total_duration_ms": 5806,
+        "total_duration_ms": 18068,
         "node_count": 5
       },
-      "run_duration_ms": 5830,
+      "run_duration_ms": 18090,
       "success": true
     },
     {
       "id": "learn-002",
-      "question": "帮我规划 Agent 系统的学习路线",
+      "question": "帮我规划 Agent 系统学习路线（我是进阶水平）",
       "expected": {
         "mode": "learn",
         "difficulty": "complex",
@@ -104,24 +102,22 @@
       },
       "actual": {
         "mode": "learn",
-        "final_output": "执行未达预期。当前结果未提供完整的学习路线规划，仅包含 LangGraph 概述信息，无法满足用户需求。建议补充更多关于 Agent 系统学习路径的内容，例如理论基础、实践项目、推荐资源等。",
-        "retrieval_score": 0.4861407935619354,
+        "final_output": "## 帮我规划 Agent 系统学习路线（我是进阶水平）\n\n**学习目标**：理解核心概念；掌握实践技能；能够独立应用\n\n### 模块1：源码剖析（30分钟）\n核心模块源码解读\n\n### 模块2：系统设计（35分钟）\n大规模系统架构设计\n\n### 模块3：前沿探索（25分钟）\n最新论文与研究方向\n\n**预计总时长**：90分钟",
+        "retrieval_score": 0.6197964787483216,
         "groundedness_score": null,
         "completeness_score": null,
+        "confidence": 0.8,
         "answer_source": null,
         "retry_count": 3,
         "error": null,
-        "fallback_triggered": false,
-        "fallback_reason": null
+        "fallback_triggered": true,
+        "fallback_reason": "PLANNER: UnboundLocalError"
       },
       "metrics": {
         "rag": {
           "docs_retrieved": 5,
-          "retrieval_score": 0.4861407935619354,
-          "has_context": true,
-          "total_docs_after_rerank": 5,
-          "vector_search_latency_ms": 0,
-          "rerank_latency_ms": 0
+          "retrieval_score": 0.6197964787483216,
+          "has_context": true
         },
         "tool": {
           "tool_calls_total": 1,
@@ -135,7 +131,7 @@
         },
         "answer": {
           "has_answer": true,
-          "answer_length_chars": 95,
+          "answer_length_chars": 164,
           "answer_source": null,
           "is_rag_sourced": false,
           "is_fallback": false
@@ -159,13 +155,13 @@
         },
         "governance": {
           "mode": "learn",
-          "retrieval_score": 0.4861407935619354,
+          "retrieval_score": 0.6197964787483216,
           "groundedness_score": null,
           "completeness_score": null,
           "answer_source": null,
           "retry_reason": null,
-          "fallback_triggered": false,
-          "fallback_reason": null
+          "fallback_triggered": true,
+          "fallback_reason": "PLANNER: UnboundLocalError"
         }
       },
       "hallucination": {
@@ -180,22 +176,26 @@
           "retrieve",
           "execute",
           "reflect",
+          "planner",
+          "decide",
           "retrieve",
           "execute",
           "reflect",
+          "planner",
+          "decide",
           "retrieve",
           "execute",
           "reflect"
         ],
-        "total_duration_ms": 8581,
-        "node_count": 11
+        "total_duration_ms": 66095,
+        "node_count": 15
       },
-      "run_duration_ms": 8612,
+      "run_duration_ms": 66128,
       "success": true
     },
     {
       "id": "learn-003",
-      "question": "学习 Prompt 工程",
+      "question": "学习 Prompt 工程（我是中等水平）",
       "expected": {
         "mode": "learn",
         "difficulty": "simple",
@@ -203,10 +203,11 @@
       },
       "actual": {
         "mode": "learn",
-        "final_output": "学习计划已完成。评估置信度：0.95",
-        "retrieval_score": 0.4193863034248352,
+        "final_output": "## Prompt Engineering\n\n**学习目标**：理解Prompt Engineering的基本概念；掌握中等难度的Prompt设计技巧；能够独立解决Prompt相关问题\n\n### 模块1：基础回顾与进阶准备（60分钟）\n复习Prompt Engineering的基础知识，包括但不限于定义、重要性以及基本的设计原则。通过案例分析加深对这些基础知识的理解，并为接下来的学习做准备。\n\n#",
+        "retrieval_score": 0.6056421875953675,
         "groundedness_score": null,
         "completeness_score": null,
+        "confidence": 0.8,
         "answer_source": null,
         "retry_count": 1,
         "error": null,
@@ -216,11 +217,8 @@
       "metrics": {
         "rag": {
           "docs_retrieved": 5,
-          "retrieval_score": 0.4193863034248352,
-          "has_context": true,
-          "total_docs_after_rerank": 5,
-          "vector_search_latency_ms": 0,
-          "rerank_latency_ms": 0
+          "retrieval_score": 0.6056421875953675,
+          "has_context": true
         },
         "tool": {
           "tool_calls_total": 1,
@@ -234,7 +232,7 @@
         },
         "answer": {
           "has_answer": true,
-          "answer_length_chars": 18,
+          "answer_length_chars": 416,
           "answer_source": null,
           "is_rag_sourced": false,
           "is_fallback": false
@@ -258,7 +256,7 @@
         },
         "governance": {
           "mode": "learn",
-          "retrieval_score": 0.4193863034248352,
+          "retrieval_score": 0.6056421875953675,
           "groundedness_score": null,
           "completeness_score": null,
           "answer_source": null,
@@ -280,15 +278,15 @@
           "execute",
           "reflect"
         ],
-        "total_duration_ms": 5298,
+        "total_duration_ms": 16055,
         "node_count": 5
       },
-      "run_duration_ms": 5302,
+      "run_duration_ms": 16064,
       "success": true
     },
     {
       "id": "learn-004",
-      "question": "我想了解 RAG 检索增强生成",
+      "question": "学习 RAG 检索增强生成",
       "expected": {
         "mode": "learn",
         "difficulty": "simple",
@@ -296,38 +294,34 @@
       },
       "actual": {
         "mode": "learn",
-        "final_output": "学习计划已完成。评估置信度：0.95",
-        "retrieval_score": 0.4308975160121918,
+        "final_output": "你已学习过以下主题：RAG。请告诉我你想学习的新主题？",
+        "retrieval_score": null,
         "groundedness_score": null,
         "completeness_score": null,
+        "confidence": null,
         "answer_source": null,
-        "retry_count": 1,
+        "retry_count": 0,
         "error": null,
         "fallback_triggered": false,
         "fallback_reason": null
       },
       "metrics": {
         "rag": {
-          "docs_retrieved": 5,
-          "retrieval_score": 0.4308975160121918,
-          "has_context": true,
-          "total_docs_after_rerank": 5,
-          "vector_search_latency_ms": 0,
-          "rerank_latency_ms": 0
+          "docs_retrieved": 0,
+          "retrieval_score": null,
+          "has_context": false
         },
         "tool": {
-          "tool_calls_total": 1,
-          "tool_success_count": 1,
+          "tool_calls_total": 0,
+          "tool_success_count": 0,
           "tool_failure_count": 0,
-          "tool_success_rate": 1.0,
+          "tool_success_rate": null,
           "total_tool_duration_ms": 0,
-          "tools_used": [
-            "search_docs"
-          ]
+          "tools_used": []
         },
         "answer": {
           "has_answer": true,
-          "answer_length_chars": 18,
+          "answer_length_chars": 27,
           "answer_source": null,
           "is_rag_sourced": false,
           "is_fallback": false
@@ -336,13 +330,10 @@
           "mode": "learn",
           "nodes_visited": [
             "PLANNER",
-            "DECIDE",
-            "RETRIEVE",
-            "EXECUTE",
-            "REFLECT"
+            "EXECUTE"
           ],
-          "nodes_visited_count": 5,
-          "retry_count": 1,
+          "nodes_visited_count": 2,
+          "retry_count": 0,
           "max_retries": 3,
           "did_retry": false,
           "retries_exhausted": false,
@@ -351,7 +342,7 @@
         },
         "governance": {
           "mode": "learn",
-          "retrieval_score": 0.4308975160121918,
+          "retrieval_score": null,
           "groundedness_score": null,
           "completeness_score": null,
           "answer_source": null,
@@ -367,21 +358,17 @@
       },
       "trace": {
         "nodes_visited": [
-          "planner",
-          "decide",
-          "retrieve",
-          "execute",
-          "reflect"
+          "planner"
         ],
-        "total_duration_ms": 5026,
-        "node_count": 5
+        "total_duration_ms": 0,
+        "node_count": 1
       },
-      "run_duration_ms": 5033,
+      "run_duration_ms": 0,
       "success": true
     },
     {
       "id": "learn-005",
-      "question": "学习 Memory 记忆系统设计",
+      "question": "我想了解 Agent Memory 和记忆系统设计",
       "expected": {
         "mode": "learn",
         "difficulty": "complex",
@@ -389,38 +376,34 @@
       },
       "actual": {
         "mode": "learn",
-        "final_output": "学习计划已完成。评估置信度：0.85",
-        "retrieval_score": 0.5387177705764771,
+        "final_output": "请告诉我你当前对该主题的掌握水平（入门 / 中等 / 进阶）",
+        "retrieval_score": null,
         "groundedness_score": null,
         "completeness_score": null,
+        "confidence": null,
         "answer_source": null,
-        "retry_count": 1,
+        "retry_count": 0,
         "error": null,
         "fallback_triggered": false,
         "fallback_reason": null
       },
       "metrics": {
         "rag": {
-          "docs_retrieved": 5,
-          "retrieval_score": 0.5387177705764771,
-          "has_context": true,
-          "total_docs_after_rerank": 5,
-          "vector_search_latency_ms": 0,
-          "rerank_latency_ms": 0
+          "docs_retrieved": 0,
+          "retrieval_score": null,
+          "has_context": false
         },
         "tool": {
-          "tool_calls_total": 1,
-          "tool_success_count": 1,
+          "tool_calls_total": 0,
+          "tool_success_count": 0,
           "tool_failure_count": 0,
-          "tool_success_rate": 1.0,
+          "tool_success_rate": null,
           "total_tool_duration_ms": 0,
-          "tools_used": [
-            "search_docs"
-          ]
+          "tools_used": []
         },
         "answer": {
           "has_answer": true,
-          "answer_length_chars": 18,
+          "answer_length_chars": 30,
           "answer_source": null,
           "is_rag_sourced": false,
           "is_fallback": false
@@ -429,13 +412,10 @@
           "mode": "learn",
           "nodes_visited": [
             "PLANNER",
-            "DECIDE",
-            "RETRIEVE",
-            "EXECUTE",
-            "REFLECT"
+            "EXECUTE"
           ],
-          "nodes_visited_count": 5,
-          "retry_count": 1,
+          "nodes_visited_count": 2,
+          "retry_count": 0,
           "max_retries": 3,
           "did_retry": false,
           "retries_exhausted": false,
@@ -444,7 +424,7 @@
         },
         "governance": {
           "mode": "learn",
-          "retrieval_score": 0.5387177705764771,
+          "retrieval_score": null,
           "groundedness_score": null,
           "completeness_score": null,
           "answer_source": null,
@@ -460,16 +440,94 @@
       },
       "trace": {
         "nodes_visited": [
-          "planner",
-          "decide",
-          "retrieve",
-          "execute",
-          "reflect"
+          "planner"
         ],
-        "total_duration_ms": 5459,
-        "node_count": 5
+        "total_duration_ms": 0,
+        "node_count": 1
       },
-      "run_duration_ms": 5471,
+      "run_duration_ms": 17,
+      "success": true
+    },
+    {
+      "id": "learn-006",
+      "question": "学习向量数据库和 Embedding",
+      "expected": {
+        "mode": "learn",
+        "difficulty": "simple",
+        "should_retrieve": true
+      },
+      "actual": {
+        "mode": "learn",
+        "final_output": "请告诉我你当前对该主题的掌握水平（入门 / 中等 / 进阶）",
+        "retrieval_score": null,
+        "groundedness_score": null,
+        "completeness_score": null,
+        "confidence": null,
+        "answer_source": null,
+        "retry_count": 0,
+        "error": null,
+        "fallback_triggered": false,
+        "fallback_reason": null
+      },
+      "metrics": {
+        "rag": {
+          "docs_retrieved": 0,
+          "retrieval_score": null,
+          "has_context": false
+        },
+        "tool": {
+          "tool_calls_total": 0,
+          "tool_success_count": 0,
+          "tool_failure_count": 0,
+          "tool_success_rate": null,
+          "total_tool_duration_ms": 0,
+          "tools_used": []
+        },
+        "answer": {
+          "has_answer": true,
+          "answer_length_chars": 30,
+          "answer_source": null,
+          "is_rag_sourced": false,
+          "is_fallback": false
+        },
+        "flow": {
+          "mode": "learn",
+          "nodes_visited": [
+            "PLANNER",
+            "EXECUTE"
+          ],
+          "nodes_visited_count": 2,
+          "retry_count": 0,
+          "max_retries": 3,
+          "did_retry": false,
+          "retries_exhausted": false,
+          "has_error": false,
+          "error": null
+        },
+        "governance": {
+          "mode": "learn",
+          "retrieval_score": null,
+          "groundedness_score": null,
+          "completeness_score": null,
+          "answer_source": null,
+          "retry_reason": null,
+          "fallback_triggered": false,
+          "fallback_reason": null
+        }
+      },
+      "hallucination": {
+        "flag": false,
+        "severity": "none",
+        "rules_triggered": []
+      },
+      "trace": {
+        "nodes_visited": [
+          "planner"
+        ],
+        "total_duration_ms": 0,
+        "node_count": 1
+      },
+      "run_duration_ms": 7,
       "success": true
     },
     {
@@ -482,12 +540,13 @@
       },
       "actual": {
         "mode": "qa",
-        "final_output": "RAG（检索增强生成）是一种结合外部知识库和大语言模型的方法，用于提高AI智能体在复杂任务中的性能和可靠性。它通过外部化、结构化的存储与检索机制，使智能体能够记住过去的交互经验、学习用户偏好，并在未来的任务中做出更明智、更具上下文感知的决策 [doc_5]。",
-        "retrieval_score": 0.3434272348880768,
-        "groundedness_score": 0.5,
-        "completeness_score": 0.5,
+        "final_output": "RAG 是一种将信息检索与文本生成相结合的技术框架，其目的是利用外部知识库来弥补大型语言模型（LLM）的知识滞后和事实性“幻觉”问题。RAG 的核心架构遵循“检索-增强-生成”的流程：首先在离线阶段将文档转化为向量存入数据库；在线时，根据用户查询检索出相关上下文片段，并将其与原始问题一起作为输入给 LLM 生成最终答案。[doc_2] RAG 的工作流程分为索引、检索和生成三个阶段，分别负责处理数",
+        "retrieval_score": 0.6149839639663697,
+        "groundedness_score": 1.0,
+        "completeness_score": 1.0,
+        "confidence": 0.95,
         "answer_source": "rag",
-        "retry_count": 3,
+        "retry_count": 1,
         "error": null,
         "fallback_triggered": false,
         "fallback_reason": null
@@ -495,11 +554,8 @@
       "metrics": {
         "rag": {
           "docs_retrieved": 5,
-          "retrieval_score": 0.3434272348880768,
-          "has_context": true,
-          "total_docs_after_rerank": 5,
-          "vector_search_latency_ms": 0,
-          "rerank_latency_ms": 0
+          "retrieval_score": 0.6149839639663697,
+          "has_context": true
         },
         "tool": {
           "tool_calls_total": 0,
@@ -511,7 +567,7 @@
         },
         "answer": {
           "has_answer": true,
-          "answer_length_chars": 129,
+          "answer_length_chars": 232,
           "answer_source": "rag",
           "is_rag_sourced": true,
           "is_fallback": false
@@ -526,20 +582,20 @@
             "REFLECT"
           ],
           "nodes_visited_count": 5,
-          "retry_count": 3,
+          "retry_count": 1,
           "max_retries": 3,
-          "did_retry": true,
-          "retries_exhausted": true,
+          "did_retry": false,
+          "retries_exhausted": false,
           "has_error": false,
           "error": null
         },
         "governance": {
           "mode": "qa",
-          "retrieval_score": 0.3434272348880768,
-          "groundedness_score": 0.5,
-          "completeness_score": 0.5,
+          "retrieval_score": 0.6149839639663697,
+          "groundedness_score": 1.0,
+          "completeness_score": 1.0,
           "answer_source": "rag",
-          "retry_reason": "文档中未提供关于 RAG 的直接定义，仅在智能体记忆系统部分提到 RAG 关键字，但未解释其含义。回答内容部分超出文档范围，需重新检索更相关的文档以确保答案的 groundedness 和 completeness。",
+          "retry_reason": null,
           "fallback_triggered": false,
           "fallback_reason": null
         }
@@ -555,23 +611,17 @@
           "decide",
           "retrieve",
           "execute",
-          "reflect",
-          "retrieve",
-          "execute",
-          "reflect",
-          "retrieve",
-          "execute",
           "reflect"
         ],
-        "total_duration_ms": 10905,
-        "node_count": 11
+        "total_duration_ms": 15321,
+        "node_count": 5
       },
-      "run_duration_ms": 10919,
+      "run_duration_ms": 15330,
       "success": true
     },
     {
       "id": "qa-002",
-      "question": "LangGraph 中的状态机是什么",
+      "question": "LangGraph 中的状态机怎么工作",
       "expected": {
         "mode": "qa",
         "difficulty": "simple",
@@ -579,10 +629,100 @@
       },
       "actual": {
         "mode": "qa",
+        "final_output": "在LangGraph中，状态机通过StateGraph来实现，它由节点（Nodes）和边（Edges）构成。每个节点代表一个具体的任务执行单元，如调用LLM或执行工具函数等，它们接收当前状态作为输入，并返回部分更新的状态 [doc_1][doc_2]。边定义了节点间的流转路径，可以是固定的常规边也可以是基于条件判断的条件边 [doc_1]。每次节点执行后都会产生一个新的状态，然后根据边的指向决定下",
+        "retrieval_score": 0.7231218934059143,
+        "groundedness_score": 1.0,
+        "completeness_score": 1.0,
+        "confidence": 0.95,
+        "answer_source": "rag",
+        "retry_count": 1,
+        "error": null,
+        "fallback_triggered": false,
+        "fallback_reason": null
+      },
+      "metrics": {
+        "rag": {
+          "docs_retrieved": 5,
+          "retrieval_score": 0.7231218934059143,
+          "has_context": true
+        },
+        "tool": {
+          "tool_calls_total": 0,
+          "tool_success_count": 0,
+          "tool_failure_count": 0,
+          "tool_success_rate": null,
+          "total_tool_duration_ms": 0,
+          "tools_used": []
+        },
+        "answer": {
+          "has_answer": true,
+          "answer_length_chars": 312,
+          "answer_source": "rag",
+          "is_rag_sourced": true,
+          "is_fallback": false
+        },
+        "flow": {
+          "mode": "qa",
+          "nodes_visited": [
+            "PLANNER",
+            "DECIDE",
+            "RETRIEVE",
+            "EXECUTE",
+            "REFLECT"
+          ],
+          "nodes_visited_count": 5,
+          "retry_count": 1,
+          "max_retries": 3,
+          "did_retry": false,
+          "retries_exhausted": false,
+          "has_error": false,
+          "error": null
+        },
+        "governance": {
+          "mode": "qa",
+          "retrieval_score": 0.7231218934059143,
+          "groundedness_score": 1.0,
+          "completeness_score": 1.0,
+          "answer_source": "rag",
+          "retry_reason": null,
+          "fallback_triggered": false,
+          "fallback_reason": null
+        }
+      },
+      "hallucination": {
+        "flag": false,
+        "severity": "none",
+        "rules_triggered": []
+      },
+      "trace": {
+        "nodes_visited": [
+          "planner",
+          "decide",
+          "retrieve",
+          "execute",
+          "reflect"
+        ],
+        "total_duration_ms": 13978,
+        "node_count": 5
+      },
+      "run_duration_ms": 14000,
+      "success": true
+    },
+    {
+      "id": "qa-003",
+      "question": "Agent 和普通聊天机器人有什么区别",
+      "expected": {
+        "mode": "qa",
+        "difficulty": "complex",
+        "should_retrieve": true
+      },
+      "actual": {
+        "mode": "qa",
         "final_output": "基于现有资料无法完整回答",
-        "retrieval_score": 0.41961783170700073,
-        "groundedness_score": 0.0,
+        "retrieval_score": 0.628091287612915,
+        "groundedness_score": 1.0,
         "completeness_score": 0.0,
+        "confidence": 0.0,
         "answer_source": "rag",
         "retry_count": 3,
         "error": null,
@@ -592,11 +732,8 @@
       "metrics": {
         "rag": {
           "docs_retrieved": 5,
-          "retrieval_score": 0.41961783170700073,
-          "has_context": true,
-          "total_docs_after_rerank": 5,
-          "vector_search_latency_ms": 0,
-          "rerank_latency_ms": 0
+          "retrieval_score": 0.628091287612915,
+          "has_context": true
         },
         "tool": {
           "tool_calls_total": 0,
@@ -632,11 +769,11 @@
         },
         "governance": {
           "mode": "qa",
-          "retrieval_score": 0.41961783170700073,
-          "groundedness_score": 0.0,
+          "retrieval_score": 0.628091287612915,
+          "groundedness_score": 1.0,
           "completeness_score": 0.0,
           "answer_source": "rag",
-          "retry_reason": "文档中没有关于 LangGraph 中的状态机的直接信息，因此无法提供基于文档支撑的回答。",
+          "retry_reason": "回答未覆盖用户的核心问题",
           "fallback_triggered": false,
           "fallback_reason": null
         }
@@ -660,15 +797,15 @@
           "execute",
           "reflect"
         ],
-        "total_duration_ms": 7879,
+        "total_duration_ms": 21308,
         "node_count": 11
       },
-      "run_duration_ms": 7896,
+      "run_duration_ms": 21324,
       "success": true
     },
     {
-      "id": "qa-003",
-      "question": "Agent 和普通聊天机器人有什么区别",
+      "id": "qa-004",
+      "question": "RAG 管道的检索和生成环节各起什么作用",
       "expected": {
         "mode": "qa",
         "difficulty": "complex",
@@ -676,12 +813,13 @@
       },
       "actual": {
         "mode": "qa",
-        "final_output": "Agent 和普通聊天机器人的区别在于，Agent 具备独立的记忆系统，可以持久化存储重要信息并在需要时主动检索，从而解决长程依赖问题并提供个性化体验。而普通聊天机器人在每次对话开始时都是“失忆”的，无法维持连贯的交互 [doc_1] [doc_2]。",
-        "retrieval_score": 0.4973950028419495,
-        "groundedness_score": 0.8,
-        "completeness_score": 0.5,
+        "final_output": "在RAG管道中，检索阶段的作用是将用户的自然语言查询转化为向量，在数据库中进行相似性搜索，以召回最相关的Top-K个文档块 [doc_1]。生成阶段则是将检索到的上下文与原始查询组装成一个完整的Prompt，发送给LLM，由LLM结合这些信息生成最终的答案 [doc_1]。",
+        "retrieval_score": 0.7220019936561585,
+        "groundedness_score": 1.0,
+        "completeness_score": 1.0,
+        "confidence": 0.35,
         "answer_source": "rag",
-        "retry_count": 3,
+        "retry_count": 1,
         "error": null,
         "fallback_triggered": false,
         "fallback_reason": null
@@ -689,11 +827,8 @@
       "metrics": {
         "rag": {
           "docs_retrieved": 5,
-          "retrieval_score": 0.4973950028419495,
-          "has_context": true,
-          "total_docs_after_rerank": 5,
-          "vector_search_latency_ms": 0,
-          "rerank_latency_ms": 0
+          "retrieval_score": 0.7220019936561585,
+          "has_context": true
         },
         "tool": {
           "tool_calls_total": 0,
@@ -705,7 +840,7 @@
         },
         "answer": {
           "has_answer": true,
-          "answer_length_chars": 126,
+          "answer_length_chars": 137,
           "answer_source": "rag",
           "is_rag_sourced": true,
           "is_fallback": false
@@ -720,20 +855,20 @@
             "REFLECT"
           ],
           "nodes_visited_count": 5,
-          "retry_count": 3,
+          "retry_count": 1,
           "max_retries": 3,
-          "did_retry": true,
-          "retries_exhausted": true,
+          "did_retry": false,
+          "retries_exhausted": false,
           "has_error": false,
           "error": null
         },
         "governance": {
           "mode": "qa",
-          "retrieval_score": 0.4973950028419495,
-          "groundedness_score": 0.8,
-          "completeness_score": 0.5,
+          "retrieval_score": 0.7220019936561585,
+          "groundedness_score": 1.0,
+          "completeness_score": 1.0,
           "answer_source": "rag",
-          "retry_reason": "回答未覆盖用户的核心问题，仅提及了记忆系统这一方面，但未说明 Agent 与普通聊天机器人的其他关键区别（如自主决策、任务规划、工具调用等）。",
+          "retry_reason": null,
           "fallback_triggered": false,
           "fallback_reason": null
         }
@@ -749,23 +884,17 @@
           "decide",
           "retrieve",
           "execute",
-          "reflect",
-          "retrieve",
-          "execute",
-          "reflect",
-          "retrieve",
-          "execute",
           "reflect"
         ],
-        "total_duration_ms": 11781,
-        "node_count": 11
+        "total_duration_ms": 14498,
+        "node_count": 5
       },
-      "run_duration_ms": 11791,
+      "run_duration_ms": 14526,
       "success": true
     },
     {
-      "id": "qa-004",
-      "question": "Prompt 缓存是什么",
+      "id": "qa-005",
+      "question": "向量数据库和传统数据库的区别是什么",
       "expected": {
         "mode": "qa",
         "difficulty": "simple",
@@ -773,12 +902,13 @@
       },
       "actual": {
         "mode": "qa",
-        "final_output": "Prompt 缓存并不是文档中明确提到的概念。不过，根据文档内容，智能体记忆系统的作用是通过外部化、结构化的存储与检索机制，模拟人类的认知记忆功能，使智能体能够记住过去的交互经验并持久化存储重要信息 [doc_1] [doc_2]。这可能与 Prompt 缓存的功能类似，但文档中没有直接提及该术语。",
-        "retrieval_score": 0.45420504808425904,
-        "groundedness_score": 0.6666666666666666,
-        "completeness_score": 0.5,
+        "final_output": "向量数据库与传统数据库的主要区别在于它们处理数据的方式和应用场景。传统数据库，如MySQL，擅长处理结构化数据，并基于精确匹配或SQL查询来检索信息，但在处理自然语言等非结构化数据时表现不佳[doc_1]。相比之下，向量数据库专门设计用于处理文本、图像这样的非结构化数据，通过将这些数据转换为高维向量并利用近似最近邻搜索技术快速找到相似项，从而能够根据数据的语义而非仅仅是关键词来进行检索[doc_2",
+        "retrieval_score": 0.6622379064559937,
+        "groundedness_score": 1.0,
+        "completeness_score": 1.0,
+        "confidence": 0.95,
         "answer_source": "rag",
-        "retry_count": 3,
+        "retry_count": 1,
         "error": null,
         "fallback_triggered": false,
         "fallback_reason": null
@@ -786,11 +916,8 @@
       "metrics": {
         "rag": {
           "docs_retrieved": 5,
-          "retrieval_score": 0.45420504808425904,
-          "has_context": true,
-          "total_docs_after_rerank": 5,
-          "vector_search_latency_ms": 0,
-          "rerank_latency_ms": 0
+          "retrieval_score": 0.6622379064559937,
+          "has_context": true
         },
         "tool": {
           "tool_calls_total": 0,
@@ -802,7 +929,7 @@
         },
         "answer": {
           "has_answer": true,
-          "answer_length_chars": 150,
+          "answer_length_chars": 202,
           "answer_source": "rag",
           "is_rag_sourced": true,
           "is_fallback": false
@@ -817,20 +944,20 @@
             "REFLECT"
           ],
           "nodes_visited_count": 5,
-          "retry_count": 3,
+          "retry_count": 1,
           "max_retries": 3,
-          "did_retry": true,
-          "retries_exhausted": true,
+          "did_retry": false,
+          "retries_exhausted": false,
           "has_error": false,
           "error": null
         },
         "governance": {
           "mode": "qa",
-          "retrieval_score": 0.45420504808425904,
-          "groundedness_score": 0.6666666666666666,
-          "completeness_score": 0.5,
+          "retrieval_score": 0.6622379064559937,
+          "groundedness_score": 1.0,
+          "completeness_score": 1.0,
           "answer_source": "rag",
-          "retry_reason": "文档中未直接提及 'Prompt 缓存' 概念，但回答尝试基于相关概念进行推断，未能完全覆盖用户问题的核心。需要重新检索是否有关于 'Prompt 缓存' 的更直接信息。",
+          "retry_reason": null,
           "fallback_triggered": false,
           "fallback_reason": null
         }
@@ -846,22 +973,16 @@
           "decide",
           "retrieve",
           "execute",
-          "reflect",
-          "retrieve",
-          "execute",
-          "reflect",
-          "retrieve",
-          "execute",
           "reflect"
         ],
-        "total_duration_ms": 11160,
-        "node_count": 11
+        "total_duration_ms": 18235,
+        "node_count": 5
       },
-      "run_duration_ms": 11176,
+      "run_duration_ms": 18262,
       "success": true
     },
     {
-      "id": "qa-005",
+      "id": "qa-006",
       "question": "Embedding 模型怎么选",
       "expected": {
         "mode": "qa",
@@ -869,12 +990,13 @@
         "should_retrieve": true
       },
       "actual": {
-        "mode": "learn",
-        "final_output": "执行未达预期。搜索结果未提供关于 Embedding 模型选择的直接信息，需重新检索相关文档或补充知识库内容。",
-        "retrieval_score": 0.4298004686832428,
-        "groundedness_score": null,
-        "completeness_score": null,
-        "answer_source": null,
+        "mode": "qa",
+        "final_output": "基于现有资料无法完整回答关于如何选择Embedding模型的具体方法。但可以了解到，Embedding模型是向量数据库的核心组成部分之一，用于将非结构化数据转换为高维向量，以便进行高效的相似性搜索。[doc_4]",
+        "retrieval_score": 0.5134424805641175,
+        "groundedness_score": 1.0,
+        "completeness_score": 0.0,
+        "confidence": 0.4,
+        "answer_source": "rag",
         "retry_count": 3,
         "error": null,
         "fallback_triggered": false,
@@ -883,31 +1005,26 @@
       "metrics": {
         "rag": {
           "docs_retrieved": 5,
-          "retrieval_score": 0.4298004686832428,
-          "has_context": true,
-          "total_docs_after_rerank": 5,
-          "vector_search_latency_ms": 0,
-          "rerank_latency_ms": 0
+          "retrieval_score": 0.5134424805641175,
+          "has_context": true
         },
         "tool": {
-          "tool_calls_total": 1,
-          "tool_success_count": 1,
+          "tool_calls_total": 0,
+          "tool_success_count": 0,
           "tool_failure_count": 0,
-          "tool_success_rate": 1.0,
+          "tool_success_rate": null,
           "total_tool_duration_ms": 0,
-          "tools_used": [
-            "search_docs"
-          ]
+          "tools_used": []
         },
         "answer": {
           "has_answer": true,
-          "answer_length_chars": 55,
-          "answer_source": null,
-          "is_rag_sourced": false,
+          "answer_length_chars": 106,
+          "answer_source": "rag",
+          "is_rag_sourced": true,
           "is_fallback": false
         },
         "flow": {
-          "mode": "learn",
+          "mode": "qa",
           "nodes_visited": [
             "PLANNER",
             "DECIDE",
@@ -924,11 +1041,11 @@
           "error": null
         },
         "governance": {
-          "mode": "learn",
-          "retrieval_score": 0.4298004686832428,
-          "groundedness_score": null,
-          "completeness_score": null,
-          "answer_source": null,
+          "mode": "qa",
+          "retrieval_score": 0.5134424805641175,
+          "groundedness_score": 1.0,
+          "completeness_score": 0.0,
+          "answer_source": "rag",
           "retry_reason": null,
           "fallback_triggered": false,
           "fallback_reason": null
@@ -953,14 +1070,14 @@
           "execute",
           "reflect"
         ],
-        "total_duration_ms": 8669,
+        "total_duration_ms": 40940,
         "node_count": 11
       },
-      "run_duration_ms": 8679,
+      "run_duration_ms": 40975,
       "success": true
     },
     {
-      "id": "qa-006",
+      "id": "qa-007",
       "question": "今天天气怎么样",
       "expected": {
         "mode": "qa",
@@ -970,9 +1087,10 @@
       "actual": {
         "mode": "qa",
         "final_output": "基于现有资料无法完整回答",
-        "retrieval_score": 0.34018797874450685,
+        "retrieval_score": null,
         "groundedness_score": 1.0,
         "completeness_score": 0.0,
+        "confidence": 0.4,
         "answer_source": "rag",
         "retry_count": 3,
         "error": null,
@@ -981,12 +1099,9 @@
       },
       "metrics": {
         "rag": {
-          "docs_retrieved": 5,
-          "retrieval_score": 0.34018797874450685,
-          "has_context": true,
-          "total_docs_after_rerank": 5,
-          "vector_search_latency_ms": 0,
-          "rerank_latency_ms": 0
+          "docs_retrieved": 0,
+          "retrieval_score": null,
+          "has_context": false
         },
         "tool": {
           "tool_calls_total": 0,
@@ -1022,19 +1137,21 @@
         },
         "governance": {
           "mode": "qa",
-          "retrieval_score": 0.34018797874450685,
+          "retrieval_score": null,
           "groundedness_score": 1.0,
           "completeness_score": 0.0,
           "answer_source": "rag",
-          "retry_reason": "文档中没有与用户问题相关的天气信息，AI 回答正确指出无法完整回答",
+          "retry_reason": null,
           "fallback_triggered": false,
           "fallback_reason": null
         }
       },
       "hallucination": {
-        "flag": false,
-        "severity": "none",
-        "rules_triggered": []
+        "flag": true,
+        "severity": "medium",
+        "rules_triggered": [
+          "empty_context_mismatch"
+        ]
       },
       "trace": {
         "nodes_visited": [
@@ -1050,14 +1167,14 @@
           "execute",
           "reflect"
         ],
-        "total_duration_ms": 7541,
+        "total_duration_ms": 19542,
         "node_count": 11
       },
-      "run_duration_ms": 7562,
+      "run_duration_ms": 19565,
       "success": true
     },
     {
-      "id": "qa-007",
+      "id": "qa-008",
       "question": "asdfghjkl 什么意思",
       "expected": {
         "mode": "qa",
@@ -1066,24 +1183,22 @@
       },
       "actual": {
         "mode": "qa",
-        "final_output": "asdfghjkl 什么意思",
-        "retrieval_score": 0.31365795731544494,
-        "groundedness_score": 0.0,
+        "final_output": "基于现有资料无法完整回答",
+        "retrieval_score": null,
+        "groundedness_score": 1.0,
         "completeness_score": 0.0,
+        "confidence": 0.4,
         "answer_source": "rag",
-        "retry_count": 1,
+        "retry_count": 3,
         "error": null,
         "fallback_triggered": false,
         "fallback_reason": null
       },
       "metrics": {
         "rag": {
-          "docs_retrieved": 5,
-          "retrieval_score": 0.31365795731544494,
-          "has_context": true,
-          "total_docs_after_rerank": 5,
-          "vector_search_latency_ms": 0,
-          "rerank_latency_ms": 0
+          "docs_retrieved": 0,
+          "retrieval_score": null,
+          "has_context": false
         },
         "tool": {
           "tool_calls_total": 0,
@@ -1095,7 +1210,7 @@
         },
         "answer": {
           "has_answer": true,
-          "answer_length_chars": 14,
+          "answer_length_chars": 12,
           "answer_source": "rag",
           "is_rag_sourced": true,
           "is_fallback": false
@@ -1110,28 +1225,30 @@
             "REFLECT"
           ],
           "nodes_visited_count": 5,
-          "retry_count": 1,
+          "retry_count": 3,
           "max_retries": 3,
-          "did_retry": false,
-          "retries_exhausted": false,
+          "did_retry": true,
+          "retries_exhausted": true,
           "has_error": false,
           "error": null
         },
         "governance": {
           "mode": "qa",
-          "retrieval_score": 0.31365795731544494,
-          "groundedness_score": 0.0,
+          "retrieval_score": null,
+          "groundedness_score": 1.0,
           "completeness_score": 0.0,
           "answer_source": "rag",
-          "retry_reason": "文档中没有相关信息，无法提供支撑",
+          "retry_reason": null,
           "fallback_triggered": false,
           "fallback_reason": null
         }
       },
       "hallucination": {
-        "flag": false,
-        "severity": "none",
-        "rules_triggered": []
+        "flag": true,
+        "severity": "medium",
+        "rules_triggered": [
+          "empty_context_mismatch"
+        ]
       },
       "trace": {
         "nodes_visited": [
@@ -1139,12 +1256,18 @@
           "decide",
           "retrieve",
           "execute",
+          "reflect",
+          "retrieve",
+          "execute",
+          "reflect",
+          "retrieve",
+          "execute",
           "reflect"
         ],
-        "total_duration_ms": 3766,
-        "node_count": 5
+        "total_duration_ms": 16116,
+        "node_count": 11
       },
-      "run_duration_ms": 3778,
+      "run_duration_ms": 16137,
       "success": true
     }
   ]

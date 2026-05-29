@@ -11,8 +11,23 @@ _GOVERNANCE_FIELDS = [
     "mode", "retrieval_score", "groundedness_score",
     "completeness_score", "answer_source", "retry_reason",
     "retry_count", "error",
+    "fallback_triggered", "fallback_reason",
 ]
 
+def _summarize(state: dict) -> dict[str, Any]:
+    """从 AgentState 中提取关键字段作为日志摘要"""
+    summary = {}
+    for key in _GOVERNANCE_FIELDS:
+        if key in state:
+            summary[key] = state[key]
+    # 提取state中需要的字段的值
+    # 追加非治理但有助于 trace 的字段
+    if "current_step" in state:
+        summary["current_step"] = state["current_step"]
+    if "user_input" in state:
+        val = state["user_input"]
+        summary["user_input"] = val[:80] if len(val) > 80 else val
+    return summary
 
 class NodeLogger:
     """节点级结构化日志"""
@@ -20,6 +35,21 @@ class NodeLogger:
     def __init__(self, session_id: str = "default"):
         self.session_id = session_id
         self._start_times: dict[str, float] = {}
+
+    def info(self, message: str, **kwargs) -> None:
+        """通用信息日志"""
+        self._emit(event="info", message=message, **kwargs)
+
+    # ── 内部 ──
+
+    def _emit(self, event: str, **fields) -> None:
+        record = {
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.") + f"{int(time.time()*1000)%1000:03d}",
+            "session_id": self.session_id,
+            "event": event,
+            **fields,
+        }
+        print(json.dumps(record, ensure_ascii=False))
 
     # ── 契约方法 ──
 
@@ -55,40 +85,7 @@ class NodeLogger:
             error=error,
         )
 
-    def info(self, message: str, **kwargs) -> None:
-        """通用信息日志"""
-        self._emit(event="info", message=message, **kwargs)
-
-    # ── 内部 ──
-
-    def _emit(self, event: str, **fields) -> None:
-        record = {
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.") + f"{int(time.time()*1000)%1000:03d}",
-            "session_id": self.session_id,
-            "event": event,
-            **fields,
-        }
-        print(json.dumps(record, ensure_ascii=False))
-
-
-def _summarize(state: dict) -> dict[str, Any]:
-    """从 AgentState 中提取关键字段作为日志摘要"""
-    summary = {}
-    for key in _GOVERNANCE_FIELDS:
-        if key in state:
-            summary[key] = state[key]
-    # 提取state中需要的字段的值
-    # 追加非治理但有助于 trace 的字段
-    if "current_step" in state:
-        summary["current_step"] = state["current_step"]
-    if "user_input" in state:
-        val = state["user_input"]
-        summary["user_input"] = val[:80] if len(val) > 80 else val
-    return summary
-
-
 # ── 全局单例 ──
-
 _logger: Optional[NodeLogger] = None
 
 

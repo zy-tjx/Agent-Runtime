@@ -117,11 +117,7 @@ def trace_node(name: str, node_func: Callable) -> Callable:
         tracer = get_tracer()
         start = time.time()
 
-        try:
-            result = node_func(state)
-        except Exception:
-            raise
-
+        result = node_func(state)
         duration_ms = int((time.time() - start) * 1000)
 
         # 合并完整状态以计算 diff

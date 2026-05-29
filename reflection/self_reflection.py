@@ -5,7 +5,7 @@
 from typing import Any
 
 
-# ── 权重（可调） ──
+# ── 评估权重（可调） ──
 
 _W_GROUNDEDNESS = 0.4
 _W_COMPLETENESS = 0.3

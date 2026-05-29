@@ -15,6 +15,20 @@ def _get_model() -> ModelManager:
         _model = ModelManager()
     return _model
 
+def _needs_rewrite(query: str) -> bool:
+    """检查查询是否含指代词或上下文依赖"""
+    indicators = ["它", "他", "她", "这个", "那个", "刚才", "上面", "前面", "之前", "再"]
+    return any(w in query for w in indicators)
+
+
+def _format_for_prompt(history: list[dict]) -> str:
+    lines = []
+    for msg in history[-6:]:
+        role = "用户" if msg.get("role") == "human" else "AI"
+        content = msg.get("content", "")
+        lines.append(f"{role}: {content[:150]}")
+    return "\n".join(lines)
+
 
 def rewrite(query: str, history: list[dict] | None = None) -> str:
     """
@@ -52,16 +66,3 @@ def rewrite(query: str, history: list[dict] | None = None) -> str:
     return query
 
 
-def _needs_rewrite(query: str) -> bool:
-    """检查查询是否含指代词或上下文依赖"""
-    indicators = ["它", "他", "她", "这个", "那个", "刚才", "上面", "前面", "之前", "再"]
-    return any(w in query for w in indicators)
-
-
-def _format_for_prompt(history: list[dict]) -> str:
-    lines = []
-    for msg in history[-6:]:
-        role = "用户" if msg.get("role") == "human" else "AI"
-        content = msg.get("content", "")
-        lines.append(f"{role}: {content[:150]}")
-    return "\n".join(lines)

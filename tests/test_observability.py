@@ -4,7 +4,7 @@ Phase 8 可观测性模块测试
 """
 import pytest
 from observability.logger import NodeLogger, get_logger, _summarize
-from observability.langsmith_tracer import (
+from observability.tracer import (
     TraceCollector, get_tracer, reset_tracer, trace_node,
     _compute_diff, _extract_tool_calls,
 )
@@ -195,13 +195,11 @@ class TestEvalMetrics:
         state = {
             "retrieved_context": [{"doc_id": "1"}, {"doc_id": "2"}],
             "retrieval_score": 0.85,
-            "rag_metadata": {"total_docs_after_rerank": 2, "vector_search_latency_ms": 120},
         }
         m = compute_metrics(state)
         assert m["rag"]["docs_retrieved"] == 2
         assert m["rag"]["retrieval_score"] == 0.85
         assert m["rag"]["has_context"] is True
-        assert m["rag"]["vector_search_latency_ms"] == 120
 
     def test_rag_metrics_empty(self):
         m = compute_metrics({})

@@ -110,26 +110,6 @@ class TestMemoryTools:
         })
         assert out.status == "failed"
 
-    def test_read_by_key(self, executor):
-        executor.execute("memory_write", {
-            "key": "test_read_key", "value": {"x": 1}, "category": "profile"
-        })
-        out = executor.execute("memory_read", {"key": "test_read_key"})
-        assert out.status == "success"
-        assert out.result["found"] is True
-
-    def test_read_by_category(self, executor):
-        executor.execute("memory_write", {
-            "key": "test_read_cat", "value": {"x": 2}, "category": "progress"
-        })
-        out = executor.execute("memory_read", {"category": "progress"})
-        assert out.status == "success"
-        assert out.result["found"] is True
-
-    def test_read_missing(self, executor):
-        out = executor.execute("memory_read", {"key": "test_no_exist"})
-        assert out.result["found"] is False
-
 
 # ============================================================
 # 4. REFLECT 单写源测试

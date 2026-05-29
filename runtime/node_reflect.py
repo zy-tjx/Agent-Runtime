@@ -68,6 +68,7 @@ def _build_from_rule(
     err: dict[str, Any],
     rule_suggestion: dict[str, Any],
     confidence: dict[str, Any],
+    plan: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """用规则引擎结果构建 REFLECT 输出（LLM 不可用时的降级路径）"""
     if mode == "qa":
@@ -91,7 +92,7 @@ def _build_from_rule(
             "retry_target_node": rule_suggestion["retry_target_node"],
             "hallucination_flag": False,
         }
-        return _build_learn_result(reflection, retry_count, via="规则引擎")
+        return _build_learn_result(reflection, retry_count, via="规则引擎", plan=plan)
 
 
 def _make_rule_context(
@@ -124,13 +125,16 @@ def reflect_node(state: dict[str, Any]) -> dict[str, Any]:
     user_input = state.get("user_input", "")
 
     # ── 步骤 1: 规则引擎预分析 ──
+    # learn 模式不评估检索质量（计划由 LLM 生成，不依赖检索），仅评估工具执行和计划本身
+    is_learn = mode == "learn"
     err = analyze(
         error=state.get("error"),
         tool_results=state.get("tool_results"),
-        retrieval_score=state.get("retrieval_score"),
-        retrieved_context=state.get("retrieved_context"),
-        retrieval_attempted=state.get("retrieval_score") is not None
-                            or bool(state.get("vector_search_results")),
+        retrieved_context=None if is_learn else state.get("retrieved_context"),
+        retrieval_attempted=False if is_learn else (
+            state.get("retrieval_score") is not None
+            or bool(state.get("vector_search_results"))
+        ),
         retry_count=new_retry_count,
         max_retries=max_retries,
         fallback_triggered=state.get("fallback_triggered", False),
@@ -140,13 +144,13 @@ def reflect_node(state: dict[str, Any]) -> dict[str, Any]:
         error_analysis=err,
         mode=mode,
         groundedness_score=state.get("groundedness_score"),
-        completeness_score=state.get("completeness_score"),
         hallucination_flag=False,
         fallback_reason=state.get("fallback_reason"),
     )
+    # learn 模式不评估接地度（无 QA 合成答案），置信度仅基于降级信号
     confidence = evaluate(
-        groundedness_score=state.get("groundedness_score"),
-        completeness_score=state.get("completeness_score"),
+        groundedness_score=None if is_learn else state.get("groundedness_score"),
+        completeness_score=None if is_learn else state.get("completeness_score"),
         fallback_triggered=state.get("fallback_triggered", False),
         hallucination_flag=False,
     )
@@ -154,7 +158,7 @@ def reflect_node(state: dict[str, Any]) -> dict[str, Any]:
     # ── 步骤 2: LLM 路径（规则建议作为上下文） ──
     import os
     if os.getenv("DECIDE_USE_KEYWORD", "") == "1":
-        result = _build_from_rule(mode, new_retry_count, err, rule_suggestion, confidence)
+        result = _build_from_rule(mode, new_retry_count, err, rule_suggestion, confidence, plan=state.get("plan"))
     else:
         try:
             if mode == "qa":
@@ -167,9 +171,24 @@ def reflect_node(state: dict[str, Any]) -> dict[str, Any]:
                 )
         except Exception as e:
             logger.info(f"LLM 反思路径失败，降级到规则引擎: {e}")
-            result = _build_from_rule(mode, new_retry_count, err, rule_suggestion, confidence)
+            result = _build_from_rule(mode, new_retry_count, err, rule_suggestion, confidence, plan=state.get("plan"))
             result["fallback_triggered"] = True
             result["fallback_reason"] = f"REFLECT: {type(e).__name__}"
+
+    # ── learn 模式收尾：不允许 retry RETRIEVE（计划不依赖检索结果） ──
+    if is_learn:
+        reflection = result.get("reflection", {})
+        if reflection.get("next_action") == "retry" and reflection.get("retry_target_node") == "RETRIEVE":
+            reflection["retry_target_node"] = "PLANNER"
+            logger.info("learn 模式下将 retry 目标从 RETRIEVE 改为 PLANNER")
+
+    # ── learn 模式：标记学习主题为已完成 ──
+    if is_learn and result.get("reflection", {}).get("is_satisfactory"):
+        from memory.long_term_memory import mark_topic_completed
+        plan_topic = state.get("plan", {}).get("topic", "")
+        user_id = state.get("long_term_memory", {}).get("user_id", "default")
+        if plan_topic:
+            mark_topic_completed(user_id, plan_topic)
 
     # ── 写入长期记忆（单写源） ──
     _write_to_memory(mode, user_input, result.get("reflection", {}), new_retry_count)
@@ -231,7 +250,7 @@ def _reflect_learn_path(
     )
     result_text = model.generate(prompt)
     reflection = _parse_json(result_text, ReflectOutput)
-    return _build_learn_result(reflection.model_dump(), retry_count, via="LLM")
+    return _build_learn_result(reflection.model_dump(), retry_count, via="LLM", plan=state.get("plan"))
 
 
 def _reflect_qa_path(
@@ -250,7 +269,6 @@ def _reflect_qa_path(
 
     err = analyze(
         error=state.get("error"),
-        retrieval_score=state.get("retrieval_score"),
         retrieved_context=retrieved_context,
         retrieval_attempted=state.get("retrieval_score") is not None,
         retry_count=retry_count,
@@ -283,19 +301,35 @@ def _build_learn_result(
     reflection: dict[str, Any],
     retry_count: int,
     via: str,
+    plan: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """组装 learn 模式 REFLECT 返回"""
     is_satisfactory = reflection.get("is_satisfactory", True)
     next_action = reflection.get("next_action", "end")
+
+    # 渲染学习计划内容
+    plan_text = ""
+    if plan:
+        topic = plan.get("topic", "")
+        goals = plan.get("goals", [])
+        modules = plan.get("modules", [])
+        total = plan.get("estimated_total_minutes", 0)
+        plan_text = f"## {topic}\n\n**学习目标**：{'；'.join(goals) if goals else '无'}\n\n"
+        for i, m in enumerate(modules, 1):
+            plan_text += (
+                f"### 模块{i}：{m.get('title', '')}（{m.get('duration_minutes', 0)}分钟）\n"
+                f"{m.get('content', '')}\n\n"
+            )
+        plan_text += f"**预计总时长**：{total}分钟"
 
     return {
         "current_step": "REFLECT",
         "retry_count": retry_count,
         "reflection": reflection,
         "final_output": (
-            f"学习计划已完成。评估置信度：{reflection.get('confidence', 0.5)}"
-            if is_satisfactory or next_action == "end"
-            else f"执行未达预期。{reflection.get('improvement_suggestion', '建议重试')}"
+            plan_text
+            if (is_satisfactory or next_action == "end") and plan_text
+            else plan_text or f"学习计划已生成（置信度 {reflection.get('confidence', 0.5)}）"
         ),
         "messages": [
             {"role": "ai", "content": f"反思完成（{via}）：满意度={is_satisfactory}, 决策={next_action}"}

@@ -13,7 +13,7 @@ import contextlib
 from runtime.state_graph import run_graph
 from reflection.eval_metrics import compute_metrics
 from reflection.hallucination_detector import detect as detect_hallucination
-from observability.langsmith_tracer import get_tracer, reset_tracer
+from observability.tracer import get_tracer, reset_tracer
 
 QUESTIONS_FILE = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -61,6 +61,7 @@ def run_eval(questions_file: str = QUESTIONS_FILE, output_file: str = OUTPUT_FIL
                     "retrieval_score": state.get("retrieval_score"),
                     "groundedness_score": state.get("groundedness_score"),
                     "completeness_score": state.get("completeness_score"),
+                    "confidence": (state.get("reflection") or {}).get("confidence"),
                     "answer_source": state.get("answer_source"),
                     "retry_count": state.get("retry_count", 0),
                     "error": state.get("error"),
@@ -83,6 +84,8 @@ def run_eval(questions_file: str = QUESTIONS_FILE, output_file: str = OUTPUT_FIL
             }
         except Exception as e:
             duration_ms = int((time.time() - run_start) * 1000)
+            import traceback
+            traceback.print_exc()
             print("", flush=True)
             result = {
                 "id": qid,

@@ -50,6 +50,21 @@ def _has_error(state: "AgentState") -> bool:
 
 
 # ============================================================
+# PLANNER → DECIDE | END
+# ============================================================
+
+def router_after_planner(state: "AgentState") -> str:
+    """
+    PLANNER 反问用户水平时直接结束，正常计划继续流转 DECIDE。
+    判断依据：plan 存在但 modules 为空 + mode=learn → 是反问，不是真的计划
+    """
+    plan = state.get("plan") or {}
+    if plan.get("modules") == [] and state.get("mode") == "learn":
+        return Route.END
+    return Route.DECIDE
+
+
+# ============================================================
 # DECIDE → RETRIEVE | EXECUTE | REFLECT
 # ============================================================
 
@@ -118,22 +133,14 @@ def router_after_reflect(state: "AgentState") -> str:
     REFLECT 节点之后的条件路由 —— 整个状态机唯一的重试决策点
 
     路由优先级：
-    1. recovery_action == "guardrail" → END（安全兜底）
-    2. recovery_action == "escalate" → END（无法自动恢复）
-    3. reflection 缺失 → END（异常保护）
-    4. reflection.next_action == "end" → END（满意或配额用完）
-    5. reflection.next_action == "retry" + 有配额 → retry_target_node
+    1. reflection 缺失 → END（异常保护）
+    2. reflection.next_action == "end" → END（满意或配额用完）
+    3. reflection.next_action == "retry" + 有配额 → retry_target_node
        - retry_target_node == "PLANNER" → PLANNER
        - retry_target_node == "RETRIEVE" → RETRIEVE
        - retry_target_node == "EXECUTE" → EXECUTE
-    6. reflection.next_action == "retry" + 无配额 → END（强制终止）
+    4. reflection.next_action == "retry" + 无配额 → END（强制终止）
     """
-    recovery = state.get("recovery_action")
-
-    # ── 不可恢复的终止 ──
-    if recovery in ("guardrail", "escalate"):
-        return Route.END
-
     # ── 反思决策 ──
     reflection = state.get("reflection")
     if reflection is None:
@@ -146,38 +153,8 @@ def router_after_reflect(state: "AgentState") -> str:
 
     if next_action == "retry":
         if not _can_retry(state):
-            # 配额用完，即使反思建议重试也强制终止
             return Route.END
-        target = reflection.get("retry_target_node", Route.EXECUTE)
-        if target in (Route.PLANNER, Route.RETRIEVE, Route.EXECUTE):
-            return target
-        return Route.EXECUTE
+        return reflection.get("retry_target_node", Route.EXECUTE)
 
     # 未知 next_action，安全终止
-    return Route.END
-
-
-# ============================================================
-# 错误恢复路由（供 recovery_handler 调用）
-# ============================================================
-
-def router_for_recovery(state: "AgentState") -> str:
-    """
-    异常恢复时的路由决策（由 recovery_handler 调用）
-
-    根据 recovery_action 决定：
-    - retry：返回当前节点（重新执行）
-    - fallback：跳到 REFLECT（走降级逻辑）
-    - guardrail / escalate：走到 END（安全终止）
-    """
-    recovery = state.get("recovery_action")
-
-    if recovery == "retry":
-        current = state.get("current_step", Route.REFLECT)
-        return current
-
-    if recovery == "fallback":
-        return Route.REFLECT
-
-    # guardrail / escalate / 未知
     return Route.END

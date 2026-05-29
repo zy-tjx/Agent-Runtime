@@ -8,7 +8,6 @@ from typing import Any
 def analyze(
     error: str | None = None,
     tool_results: list[dict] | None = None,
-    retrieval_score: float | None = None,
     retrieved_context: list[dict] | None = None,
     retrieval_attempted: bool = False,
     retry_count: int = 0,

@@ -6,6 +6,21 @@ DECIDE 节点
   1. 主路径：LLM 驱动（工具选择 + 参数生成），输出受 Pydantic 约束
   2. 降级路径：LLM 失败时回退到关键词规则匹配
 """
+
+"""
+decide_node (入口)
+  └── _decide_via_llm (主路径)
+        ├── render (生成提示词)
+        ├── model.generate (调用大模型)
+        ├── _parse_json (解析并校验 LLM 输出的 JSON)
+        ├── registry.get (校验工具是否存在)
+        └── _build_decision (打包最终结果)
+decide_node (入口)
+  └── _decide_via_keyword (降级路径)
+        ├── _match_tool (关键词匹配)
+        ├── _build_arguments (简单参数映射)
+        └── _build_decision (打包最终结果)
+"""
 from typing import Any
 from pydantic import BaseModel, Field
 
@@ -45,6 +60,30 @@ def _get_model_manager():
     return _model_manager
 
 
+def _build_decision(
+    tool_name: str,
+    arguments: dict[str, Any],
+    reason: str,
+    confidence: float,
+) -> dict[str, Any]:
+    """组装 decision 返回结构"""
+    requires_retrieval = tool_name == "search_docs"
+    return {
+        "current_step": "DECIDE",
+        "decision": {
+            "tool_name": tool_name,
+            "arguments": arguments,
+            "reason": reason,
+            "confidence": confidence,
+            "requires_retrieval": requires_retrieval,
+        },
+        "messages": [
+            {"role": "ai", "content": f"决定调用 {tool_name}：{reason}"}
+        ],
+    }
+#—— 最终结果打包 ——
+
+
 # ── 降级路径：关键词匹配 ──
 
 _KEYWORD_TOOL_MAP: list[tuple[str, str, dict[str, str]]] = [
@@ -80,46 +119,46 @@ def _build_arguments(
             args[param_name] = source[len("fixed_"):]
     return args
 
+def _decide_via_keyword(
+    registry, user_input: str, plan: dict[str, Any]
+) -> dict[str, Any]:
+    """降级路径：关键词规则匹配"""
+    tool_name, arg_sources, reason = _match_tool(user_input)
 
-# ── 节点主函数 ──
+    if not registry.exists(tool_name):
+        tool_name = "search_docs"
+        arg_sources = {"query": "user_input"}
+        reason = "匹配的工具不可用，回退到 search_docs"
 
-def decide_node(state: dict[str, Any]) -> dict[str, Any]:
-    """基于可用工具列表做策略决策"""
-    logger = get_logger()
-    logger.node_start("DECIDE", state)
+    arguments = _build_arguments(arg_sources, user_input, plan)
+    return _build_decision(
+        tool_name=tool_name,
+        arguments=arguments,
+        reason=reason,
+        confidence=0.75,
+    )
 
-    registry = _get_registry()
-    user_input = state.get("user_input", "")
-    plan = state.get("plan", {})
-
-    # ── 提取对话历史 ──
-    from runtime.node_planner import _format_history
-    stm = state.get("short_term_memory", {}) or {}
-    conversation_history = _format_history(stm.get("buffer", []))
-
-    # ── 环境变量控制：测试时跳过 LLM 加速 ──
-    import os
-    if os.getenv("DECIDE_USE_KEYWORD", "") == "1":
-        result = _decide_via_keyword(registry, user_input, plan)
-        logger.node_end("DECIDE", {**state, **result})
-        return result
-
-    # ── 优先走 LLM 路径 ──
+def _parse_json(text: str, model_class):
+    """从 LLM 输出中提取 JSON 并用 Pydantic 模型校验"""
+    import json as _json
+    text = text.strip()
+    # 去掉可能的 markdown 代码块标记
+    if text.startswith("```"):
+        lines = text.split("\n")
+        text = "\n".join(lines[1:]) if len(lines) > 1 else text
+        if text.endswith("```"):
+            text = text[:-3].strip()
     try:
-        result = _decide_via_llm(registry, user_input, plan, conversation_history)
-        logger.node_end("DECIDE", {**state, **result})
-        return result
-    except Exception as e:
-        logger.info(f"LLM 路径失败，降级到关键词匹配: {e}")
-        fallback_error = f"DECIDE: {type(e).__name__}"
-
-    # ── 降级路径：关键词匹配 ──
-    result = _decide_via_keyword(registry, user_input, plan)
-    result["fallback_triggered"] = True
-    result["fallback_reason"] = fallback_error
-    logger.node_end("DECIDE", {**state, **result})
-    return result
-
+        data = _json.loads(text)
+    except _json.JSONDecodeError:
+        # 尝试提取第一个完整 JSON 对象
+        import re
+        match = re.search(r"\{[^{}]*\{[^{}]*\}[^{}]*\}|\{[^{}]*\}", text, re.DOTALL)
+        if match:
+            data = _json.loads(match.group())
+        else:
+            raise ValueError(f"无法解析 LLM 输出的 JSON: {text[:200]}")
+    return model_class(**data)
 
 def _decide_via_llm(
     registry, user_input: str, plan: dict[str, Any],
@@ -170,69 +209,45 @@ def _decide_via_llm(
         confidence=selection.confidence,
     )
 
+# ── 节点主函数 ──
 
-def _parse_json(text: str, model_class):
-    """从 LLM 输出中提取 JSON 并用 Pydantic 模型校验"""
-    import json as _json
-    text = text.strip()
-    # 去掉可能的 markdown 代码块标记
-    if text.startswith("```"):
-        lines = text.split("\n")
-        text = "\n".join(lines[1:]) if len(lines) > 1 else text
-        if text.endswith("```"):
-            text = text[:-3].strip()
+def decide_node(state: dict[str, Any]) -> dict[str, Any]:
+    """基于可用工具列表做策略决策"""
+
+    # ── 日志 ──
+    logger = get_logger()
+    logger.node_start("DECIDE", state)
+
+    registry = _get_registry()
+    user_input = state.get("user_input", "")
+    plan = state.get("plan", {})
+
+    # ── 提取对话历史 ──
+    from runtime.node_planner import _format_history
+    stm = state.get("short_term_memory", {}) or {}
+    conversation_history = _format_history(stm.get("buffer", []))
+
+    # ── 环境变量控制：测试时跳过 LLM 加速 ──
+    import os
+    if os.getenv("DECIDE_USE_KEYWORD", "") == "1":
+        result = _decide_via_keyword(registry, user_input, plan)
+        logger.node_end("DECIDE", {**state, **result})
+        return result
+
+    # ── 优先走 LLM 路径 ──
     try:
-        data = _json.loads(text)
-    except _json.JSONDecodeError:
-        # 尝试提取第一个完整 JSON 对象
-        import re
-        match = re.search(r"\{[^{}]*\{[^{}]*\}[^{}]*\}|\{[^{}]*\}", text, re.DOTALL)
-        if match:
-            data = _json.loads(match.group())
-        else:
-            raise ValueError(f"无法解析 LLM 输出的 JSON: {text[:200]}")
-    return model_class(**data)
+        result = _decide_via_llm(registry, user_input, plan, conversation_history)
+        logger.node_end("DECIDE", {**state, **result})
+        return result
+    except Exception as e:
+        logger.info(f"LLM 路径失败，降级到关键词匹配: {e}")
+        fallback_error = f"DECIDE: {type(e).__name__}"
+
+    # ── 降级路径：关键词匹配 ──
+    result = _decide_via_keyword(registry, user_input, plan)
+    result["fallback_triggered"] = True
+    result["fallback_reason"] = fallback_error
+    logger.node_end("DECIDE", {**state, **result})
+    return result
 
 
-def _decide_via_keyword(
-    registry, user_input: str, plan: dict[str, Any]
-) -> dict[str, Any]:
-    """降级路径：关键词规则匹配"""
-    tool_name, arg_sources, reason = _match_tool(user_input)
-
-    if not registry.exists(tool_name):
-        tool_name = "search_docs"
-        arg_sources = {"query": "user_input"}
-        reason = "匹配的工具不可用，回退到 search_docs"
-
-    arguments = _build_arguments(arg_sources, user_input, plan)
-    return _build_decision(
-        tool_name=tool_name,
-        arguments=arguments,
-        reason=reason,
-        confidence=0.75,
-    )
-
-
-def _build_decision(
-    tool_name: str,
-    arguments: dict[str, Any],
-    reason: str,
-    confidence: float,
-) -> dict[str, Any]:
-    """组装 decision 返回结构"""
-    requires_retrieval = tool_name == "search_docs"
-    return {
-        "current_step": "DECIDE",
-        "decision": {
-            "action": tool_name,
-            "tool_name": tool_name,
-            "arguments": arguments,
-            "reason": reason,
-            "confidence": confidence,
-            "requires_retrieval": requires_retrieval,
-        },
-        "messages": [
-            {"role": "ai", "content": f"决定调用 {tool_name}：{reason}"}
-        ],
-    }

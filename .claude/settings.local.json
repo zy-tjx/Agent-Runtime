@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(PYTHONPATH=\".\" .venv/Scripts/python -m pytest tests/test_state_graph.py tests/test_model_manager.py -q)"
+      "Bash(PYTHONPATH=\".\" .venv/Scripts/python -m pytest tests/test_state_graph.py tests/test_model_manager.py -q)",
+      "Bash(.venv/Scripts/python.exe -m eval.eval_reporter eval/results.json)",
+      "Bash(.venv/Scripts/python.exe -m eval.eval_runner)"
     ]
   }
 }
